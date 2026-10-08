@@ -6,16 +6,27 @@ public class CarController : MonoBehaviour
     [Header("Raycast Suspension Settings")]
     [SerializeField] private Transform[] _wheelRaycastPoints;
     [SerializeField] private float _suspensionRestLength = 0.45f;
+    [Tooltip("Radius of the wheels, used for suspension calculations.")]
     [SerializeField] private float _wheelRadius = 0.35f;
+    [Tooltip("Strength of the suspension springs, how stiff the suspension is.")]
     [SerializeField] private float _springStrength = 10000f;
+    [Tooltip("Damping of the suspension springs, how quickly they return to rest length.")]
     [SerializeField] private float _springDamping = 2500f;
 
     [Header("Engine & Handling Settings")]
+    [Tooltip("Force applied to the car for acceleration.")]
     [SerializeField] private float _accelerationForce = 2500f;
+    [Tooltip("Maximum speed the car can reach.")]
+    [SerializeField] private float _maxSpeed = 500f;
+    [Tooltip("Force applied to the car when braking.")]
     [SerializeField] private float _brakeForce = 4000f;
+    [Tooltip("Force applied to the car when using the handbrake.")]
     [SerializeField] private float _handbrakeForce = 8000f;
+    [Tooltip("Maximum steering angle for the front wheels in degrees, how sharp the car can turn.")]
     [SerializeField] private float _maxSteerAngle = 30f;
-    [SerializeField, Range(0f, 1f)] private float _tyreGripFactor = 0.6f;
+    [Tooltip("Lower values result in more sliding.")]
+    [SerializeField, Range(0f, 1f)] private float _tireGripFactor = 0.6f;
+    [Tooltip("Lower values result in more sliding during handbrake.")]
     [SerializeField, Range(0f, 1f)] private float _handbrakeDriftFactor = 0.15f;
 
     [Header("Visual Wheel Settings")]
@@ -45,8 +56,8 @@ public class CarController : MonoBehaviour
 
     private void Update()
     {
-        _moveInput = Input.GetAxis("Vertical");
-        _steerInput = Input.GetAxis("Horizontal");
+        _moveInput = Input.GetAxisRaw("Vertical");
+        _steerInput = Input.GetAxisRaw("Horizontal");
         _isHandbraking = Input.GetKey(KeyCode.Space);
 
         UpdateWheelVisuals();
@@ -90,8 +101,8 @@ public class CarController : MonoBehaviour
                 
                 // Rear wheels lose lateral grip during handbrake to allow drifting
                 float effectiveGrip = (_isHandbraking && !isFrontWheel) 
-                    ? _tyreGripFactor * _handbrakeDriftFactor 
-                    : _tyreGripFactor;
+                    ? _tireGripFactor * _handbrakeDriftFactor 
+                    : _tireGripFactor;
 
                 float desiredVelChange = -steeringVel * effectiveGrip;
                 float accel = desiredVelChange / Time.fixedDeltaTime;
@@ -99,6 +110,8 @@ public class CarController : MonoBehaviour
 
                 // Acceleration, braking & handbrake
                 float forwardVel = Vector3.Dot(wheelForward, wheelWorldVel);
+                // Clamp the velocity to the maximum speed
+                forwardVel = Mathf.Clamp(forwardVel, -_maxSpeed, _maxSpeed);
 
                 if (_isHandbraking && !isFrontWheel)
                 {
