@@ -137,7 +137,7 @@ GameObject:
   - component: {fileID: 324105078}
   - component: {fileID: 324105077}
   m_Layer: 0
-  m_Name: erew
+  m_Name: Ramp
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -392,7 +392,7 @@ MonoBehaviour:
   carTransform: {fileID: 344648646}
   driverEyePoint: {fileID: 2125246403}
   carRigidbody: {fileID: 344648642}
-  fpFov: 90
+  fpFov: 75
   fpMouseSensitivity: 2
   fpYawRange: 80
   fpPitchMin: -30
@@ -440,17 +440,20 @@ MonoBehaviour:
   - {fileID: 1169279099}
   - {fileID: 1095506038}
   - {fileID: 1003446336}
-  _suspensionRestLength: 0.45
-  _wheelRadius: 0.45
-  _springStrength: 10000
-  _springDamping: 5000
-  _accelerationForce: 5000
-  _maxSpeed: 500
+  _suspensionRestLength: 0.4
+  _wheelRadius: 0.4
+  _springStrength: 25000
+  _springDamping: 8000
+  _antiRollForce: 5000
+  _accelerationForce: 3000
+  _maxSpeed: 350
   _brakeForce: 6000
   _handbrakeForce: 10000
-  _maxSteerAngle: 20
+  _maxSteerAngle: 25
+  _steeringSpeed: 5
   _tireGripFactor: 0.8
   _handbrakeDriftFactor: 0.5
+  _downforceCoefficient: 10
   _wheelVisuals:
   - {fileID: 2063022680}
   - {fileID: 126493550}

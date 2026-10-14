@@ -12,6 +12,8 @@ public class CarController : MonoBehaviour
     [SerializeField] private float _springStrength = 10000f;
     [Tooltip("Damping of the suspension springs, how quickly they return to rest length.")]
     [SerializeField] private float _springDamping = 2500f;
+    [Tooltip("Anti-roll force to prevent the car from flipping during sharp turns.")]
+    [SerializeField] private float _antiRollForce = 5000f;
 
     [Header("Engine & Handling Settings")]
     [Tooltip("Force applied to the car for acceleration.")]
@@ -22,12 +24,16 @@ public class CarController : MonoBehaviour
     [SerializeField] private float _brakeForce = 4000f;
     [Tooltip("Force applied to the car when using the handbrake.")]
     [SerializeField] private float _handbrakeForce = 8000f;
-    [Tooltip("Maximum steering angle for the front wheels in degrees, how sharp the car can turn.")]
+    [Tooltip("Maximum steering angle for the front wheels in degrees.")]
     [SerializeField] private float _maxSteerAngle = 30f;
+    [Tooltip("How fast the steering wheel turns (emulates steering wheel lock time). Higher = faster.")]
+    [SerializeField] private float _steeringSpeed = 5f;
     [Tooltip("Lower values result in more sliding.")]
     [SerializeField, Range(0f, 1f)] private float _tireGripFactor = 0.6f;
     [Tooltip("Lower values result in more sliding during handbrake.")]
     [SerializeField, Range(0f, 1f)] private float _handbrakeDriftFactor = 0.15f;
+    [Tooltip("Pushes the car down at high speeds to keep it grounded.")]
+    [SerializeField] private float _downforceCoefficient = 50f;
 
     [Header("Visual Wheel Settings")]
     [SerializeField] private Transform[] _wheelVisuals;
@@ -36,9 +42,10 @@ public class CarController : MonoBehaviour
     private Rigidbody _rb;
     private float[] _wheelSpinAngles;
 
-    // Cached Inputs
-    private float _moveInput;
-    private float _steerInput;
+    // Inputs
+    private float _rawMoveInput;
+    private float _rawSteerInput;
+    private float _smoothedSteerInput;
     private bool _isHandbraking;
 
     private void Awake()
@@ -56,9 +63,12 @@ public class CarController : MonoBehaviour
 
     private void Update()
     {
-        _moveInput = Input.GetAxis("Vertical");
-        _steerInput = Input.GetAxis("Horizontal");
+        _rawMoveInput = Input.GetAxis("Vertical");
+        _rawSteerInput = Input.GetAxis("Horizontal");
         _isHandbraking = Input.GetKey(KeyCode.Space);
+
+        // Smooth steering input to emulate a physical steering wheel turning
+        _smoothedSteerInput = Mathf.MoveTowards(_smoothedSteerInput, _rawSteerInput, _steeringSpeed * Time.deltaTime);
 
         UpdateWheelVisuals();
     }
@@ -70,6 +80,16 @@ public class CarController : MonoBehaviour
         float rayDistance = _suspensionRestLength + _wheelRadius;
         float wheelMass = _rb.mass / _wheelRaycastPoints.Length;
 
+        // Apply downforce proportional to speed squared
+        _rb.AddForce(-transform.up * (_downforceCoefficient * _rb.linearVelocity.sqrMagnitude));
+
+        // Anti-roll bar calculation (Assumes 4 wheels: 0,1 = Front, 2,3 = Rear)
+        if (_wheelRaycastPoints.Length >= 4)
+        {
+            ApplyAntiRoll(_wheelRaycastPoints[0], _wheelRaycastPoints[1], rayDistance); // Front Axle
+            ApplyAntiRoll(_wheelRaycastPoints[2], _wheelRaycastPoints[3], rayDistance); // Rear Axle
+        }
+
         for (int i = 0; i < _wheelRaycastPoints.Length; i++)
         {
             Transform rayPoint = _wheelRaycastPoints[i];
@@ -77,8 +97,8 @@ public class CarController : MonoBehaviour
 
             bool isFrontWheel = (i < 2);
 
-            // Local steering frame
-            Quaternion steerRotation = isFrontWheel ? Quaternion.Euler(0, _steerInput * _maxSteerAngle, 0) : Quaternion.identity;
+            // Local steering frame using smoothed steer input
+            Quaternion steerRotation = isFrontWheel ? Quaternion.Euler(0, _smoothedSteerInput * _maxSteerAngle, 0) : Quaternion.identity;
             Vector3 wheelForward = rayPoint.rotation * steerRotation * Vector3.forward;
             Vector3 wheelRight = rayPoint.rotation * steerRotation * Vector3.right;
 
@@ -98,10 +118,10 @@ public class CarController : MonoBehaviour
 
                 // Lateral friction (grip)
                 float steeringVel = Vector3.Dot(wheelRight, wheelWorldVel);
-                
+
                 // Rear wheels lose lateral grip during handbrake to allow drifting
-                float effectiveGrip = (_isHandbraking && !isFrontWheel) 
-                    ? _tireGripFactor * _handbrakeDriftFactor 
+                float effectiveGrip = (_isHandbraking && !isFrontWheel)
+                    ? _tireGripFactor * _handbrakeDriftFactor
                     : _tireGripFactor;
 
                 float desiredVelChange = -steeringVel * effectiveGrip;
@@ -122,11 +142,11 @@ public class CarController : MonoBehaviour
 
                     _rb.AddForceAtPosition(wheelForward * (wheelMass * finalBrakeAccel), rayPoint.position);
                 }
-                else if (_moveInput != 0)
+                else if (_rawMoveInput != 0)
                 {
-                    // Footbrake (reversing against velocity) vs acceleration
-                    bool isBraking = (_moveInput > 0f && forwardVel < -0.1f) || (_moveInput < 0f && forwardVel > 0.1f);
+                    bool isBraking = (_rawMoveInput > 0f && forwardVel < -0.1f) || (_rawMoveInput < 0f && forwardVel > 0.1f);
 
+                    // Footbrake
                     if (isBraking)
                     {
                         float requiredBrakeAccel = -forwardVel / Time.fixedDeltaTime;
@@ -137,10 +157,40 @@ public class CarController : MonoBehaviour
                     }
                     else
                     {
-                        _rb.AddForceAtPosition(wheelForward * (_moveInput * _accelerationForce), rayPoint.position);
+                        _rb.AddForceAtPosition(wheelForward * (_rawMoveInput * _accelerationForce), rayPoint.position);
                     }
                 }
             }
+        }
+    }
+
+    private void ApplyAntiRoll(Transform wheelL, Transform wheelR, float rayDistance)
+    {
+        bool groundedL = Physics.Raycast(wheelL.position, -wheelL.up, out RaycastHit hitL, rayDistance);
+        bool groundedR = Physics.Raycast(wheelR.position, -wheelR.up, out RaycastHit hitR, rayDistance);
+
+        float travelL = 1.0f;
+        float travelR = 1.0f;
+
+        if (groundedL)
+        {
+            travelL = (-wheelL.InverseTransformPoint(hitL.point).y - _wheelRadius) / _suspensionRestLength;
+        }
+
+        if (groundedR)
+        {
+            travelR = (-wheelR.InverseTransformPoint(hitR.point).y - _wheelRadius) / _suspensionRestLength;
+        }
+
+        float antiRollForceFactor = (travelL - travelR) * _antiRollForce;
+
+        if (groundedL)
+        {
+            _rb.AddForceAtPosition(wheelL.up * -antiRollForceFactor, wheelL.position);
+        }
+        if (groundedR)
+        {
+            _rb.AddForceAtPosition(wheelR.up * antiRollForceFactor, wheelR.position);
         }
     }
 
@@ -178,12 +228,12 @@ public class CarController : MonoBehaviour
                 Vector3 wheelVel = _rb.GetPointVelocity(rayPoint.position);
                 float forwardSpeed = Vector3.Dot(wheelVel, rayPoint.forward);
                 float spinDelta = (forwardSpeed / _wheelRadius) * Mathf.Rad2Deg * _visualWheelSpinSpeed * Time.deltaTime;
-                
+
                 _wheelSpinAngles[i] = (_wheelSpinAngles[i] + spinDelta) % 360f;
             }
 
-            // Combine steering and rolling rotation
-            float steerAngle = isFrontWheel ? (_steerInput * _maxSteerAngle) : 0f;
+            // Use smoothed steer input for visuals as well
+            float steerAngle = isFrontWheel ? (_smoothedSteerInput * _maxSteerAngle) : 0f;
 
             Quaternion steeringRot = Quaternion.Euler(0f, steerAngle, 0f);
             Quaternion spinRot = Quaternion.Euler(_wheelSpinAngles[i], 0f, 0f);
