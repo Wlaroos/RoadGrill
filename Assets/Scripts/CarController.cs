@@ -45,8 +45,8 @@ public class CarController : MonoBehaviour
     {
         _rb = GetComponent<Rigidbody>();
 
-        if (_rb.mass < 100f) _rb.mass = 1300f;
-        _rb.centerOfMass = new Vector3(0f, -0.4f, 0f);
+        if (_rb.mass < 100f) _rb.mass = 1200f;
+        _rb.centerOfMass = new Vector3(0f, -0.4f, -0.7f);
 
         if (_wheelVisuals != null)
         {
@@ -56,8 +56,8 @@ public class CarController : MonoBehaviour
 
     private void Update()
     {
-        _moveInput = Input.GetAxisRaw("Vertical");
-        _steerInput = Input.GetAxisRaw("Horizontal");
+        _moveInput = Input.GetAxis("Vertical");
+        _steerInput = Input.GetAxis("Horizontal");
         _isHandbraking = Input.GetKey(KeyCode.Space);
 
         UpdateWheelVisuals();
