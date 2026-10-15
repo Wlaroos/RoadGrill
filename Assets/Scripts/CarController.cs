@@ -47,6 +47,9 @@ public class CarController : MonoBehaviour
     private float _rawSteerInput;
     private float _smoothedSteerInput;
     private bool _isHandbraking;
+    
+    // Control state (Suspension and physics remain active even when player is out)
+    private bool _isControlled = true;
 
     private void Awake()
     {
@@ -61,11 +64,32 @@ public class CarController : MonoBehaviour
         }
     }
 
+    /// Enables or disables driver input while keeping suspension and physics active.
+    public void SetDriverControl(bool controlled)
+    {
+        _isControlled = controlled;
+        if (!controlled)
+        {
+            _rawMoveInput = 0f;
+            _rawSteerInput = 0f;
+            _isHandbraking = false;
+        }
+    }
+
     private void Update()
     {
-        _rawMoveInput = Input.GetAxis("Vertical");
-        _rawSteerInput = Input.GetAxis("Horizontal");
-        _isHandbraking = Input.GetKey(KeyCode.Space);
+        if (_isControlled)
+        {
+            _rawMoveInput = Input.GetAxis("Vertical");
+            _rawSteerInput = Input.GetAxis("Horizontal");
+            _isHandbraking = Input.GetKey(KeyCode.Space);
+        }
+        else
+        {
+            _rawMoveInput = 0f;
+            _rawSteerInput = 0f;
+            _isHandbraking = false;
+        }
 
         // Smooth steering input to emulate a physical steering wheel turning
         _smoothedSteerInput = Mathf.MoveTowards(_smoothedSteerInput, _rawSteerInput, _steeringSpeed * Time.deltaTime);
@@ -128,36 +152,36 @@ public class CarController : MonoBehaviour
                 float accel = desiredVelChange / Time.fixedDeltaTime;
                 _rb.AddForceAtPosition(wheelRight * (wheelMass * accel), rayPoint.position);
 
-                // Acceleration, braking & handbrake
-                float forwardVel = Vector3.Dot(wheelForward, wheelWorldVel);
-                // Clamp the velocity to the maximum speed
-                forwardVel = Mathf.Clamp(forwardVel, -_maxSpeed, _maxSpeed);
-
-                if (_isHandbraking && !isFrontWheel)
+                // Acceleration, braking & handbrake (only applied when player is driving)
+                if (_isControlled)
                 {
-                    // Mechanical handbrake locks rear wheels, apply counter-force up to max brake limit
-                    float requiredBrakeAccel = -forwardVel / Time.fixedDeltaTime;
-                    float maxBrakeAccel = _handbrakeForce / wheelMass;
-                    float finalBrakeAccel = Mathf.Clamp(requiredBrakeAccel, -maxBrakeAccel, maxBrakeAccel);
+                    float forwardVel = Vector3.Dot(wheelForward, wheelWorldVel);
+                    forwardVel = Mathf.Clamp(forwardVel, -_maxSpeed, _maxSpeed);
 
-                    _rb.AddForceAtPosition(wheelForward * (wheelMass * finalBrakeAccel), rayPoint.position);
-                }
-                else if (_rawMoveInput != 0)
-                {
-                    bool isBraking = (_rawMoveInput > 0f && forwardVel < -0.1f) || (_rawMoveInput < 0f && forwardVel > 0.1f);
-
-                    // Footbrake
-                    if (isBraking)
+                    if (_isHandbraking && !isFrontWheel)
                     {
                         float requiredBrakeAccel = -forwardVel / Time.fixedDeltaTime;
-                        float maxBrakeAccel = _brakeForce / wheelMass;
+                        float maxBrakeAccel = _handbrakeForce / wheelMass;
                         float finalBrakeAccel = Mathf.Clamp(requiredBrakeAccel, -maxBrakeAccel, maxBrakeAccel);
 
                         _rb.AddForceAtPosition(wheelForward * (wheelMass * finalBrakeAccel), rayPoint.position);
                     }
-                    else
+                    else if (_rawMoveInput != 0)
                     {
-                        _rb.AddForceAtPosition(wheelForward * (_rawMoveInput * _accelerationForce), rayPoint.position);
+                        bool isBraking = (_rawMoveInput > 0f && forwardVel < -0.1f) || (_rawMoveInput < 0f && forwardVel > 0.1f);
+
+                        if (isBraking)
+                        {
+                            float requiredBrakeAccel = -forwardVel / Time.fixedDeltaTime;
+                            float maxBrakeAccel = _brakeForce / wheelMass;
+                            float finalBrakeAccel = Mathf.Clamp(requiredBrakeAccel, -maxBrakeAccel, maxBrakeAccel);
+
+                            _rb.AddForceAtPosition(wheelForward * (wheelMass * finalBrakeAccel), rayPoint.position);
+                        }
+                        else
+                        {
+                            _rb.AddForceAtPosition(wheelForward * (_rawMoveInput * _accelerationForce), rayPoint.position);
+                        }
                     }
                 }
             }
@@ -172,6 +196,7 @@ public class CarController : MonoBehaviour
         float travelL = 1.0f;
         float travelR = 1.0f;
 
+        // Calculate suspension travel for each wheel
         if (groundedL)
         {
             travelL = (-wheelL.InverseTransformPoint(hitL.point).y - _wheelRadius) / _suspensionRestLength;
@@ -184,6 +209,7 @@ public class CarController : MonoBehaviour
 
         float antiRollForceFactor = (travelL - travelR) * _antiRollForce;
 
+        // Apply anti-roll forces to each wheel if grounded
         if (groundedL)
         {
             _rb.AddForceAtPosition(wheelL.up * -antiRollForceFactor, wheelL.position);
@@ -209,7 +235,6 @@ public class CarController : MonoBehaviour
 
             bool isFrontWheel = (i < 2);
 
-            // Suspension position
             Vector3 targetWorldPos;
             if (Physics.Raycast(rayPoint.position, -rayPoint.up, out RaycastHit hit, rayDistance))
             {
@@ -222,7 +247,6 @@ public class CarController : MonoBehaviour
 
             visual.position = targetWorldPos;
 
-            // Spin calculation, freeze rear wheel visual rotation when handbraking
             if (!(_isHandbraking && !isFrontWheel))
             {
                 Vector3 wheelVel = _rb.GetPointVelocity(rayPoint.position);
@@ -232,7 +256,6 @@ public class CarController : MonoBehaviour
                 _wheelSpinAngles[i] = (_wheelSpinAngles[i] + spinDelta) % 360f;
             }
 
-            // Use smoothed steer input for visuals as well
             float steerAngle = isFrontWheel ? (_smoothedSteerInput * _maxSteerAngle) : 0f;
 
             Quaternion steeringRot = Quaternion.Euler(0f, steerAngle, 0f);

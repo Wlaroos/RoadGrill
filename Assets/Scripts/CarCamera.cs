@@ -3,16 +3,20 @@ using UnityEngine;
 public class CarCamera : MonoBehaviour
 {
     public enum CameraMode { FirstPerson, ThirdPerson }
+    public enum TargetMode { Car, Player }
 
     [Header("Mode & Keybinds")]
     [SerializeField] private CameraMode currentMode = CameraMode.ThirdPerson;
     [SerializeField] private KeyCode toggleKey = KeyCode.V;
     [SerializeField] private float transitionSpeed = 10f; // Fast lerp for smooth mode switching
 
-    [Header("Target & Tracking")]
+    [Header("Target & Tracking (Car)")]
     [SerializeField] private Transform carTransform;
     [SerializeField] private Transform driverEyePoint; // Empty GameObject at driver's head
     [SerializeField] private Rigidbody carRigidbody;
+
+    [Header("Target & Tracking (Player)")]
+    [SerializeField] private Transform playerEyePoint; // Assigned dynamically by PlayerVehicleManager when exiting
 
     [Header("1st Person Settings")]
     [SerializeField] private float fpFov = 75f;
@@ -38,6 +42,8 @@ public class CarCamera : MonoBehaviour
     // Smooth transition tracking
     private float currentFov;
 
+    private TargetMode currentTargetMode = TargetMode.Car;
+
     private void Start()
     {
         cam = GetComponent<Camera>();
@@ -48,14 +54,26 @@ public class CarCamera : MonoBehaviour
         Cursor.visible = false;
     }
 
+    public void SetTargetMode(TargetMode mode, Transform newPlayerEye = null)
+    {
+        currentTargetMode = mode;
+        if (mode == TargetMode.Player && newPlayerEye != null)
+        {
+            playerEyePoint = newPlayerEye;
+        }
+        
+        // Reset look angles on switch
+        fpHeadYaw = 0f;
+        fpHeadPitch = 0f;
+    }
+
     private void Update()
     {
-        // Toggle mode on keypress
-        if (Input.GetKeyDown(toggleKey))
+        // Toggle mode on keypress (only when driving car in 3rd/1st person)
+        if (currentTargetMode == TargetMode.Car && Input.GetKeyDown(toggleKey))
         {
             currentMode = (currentMode == CameraMode.ThirdPerson) ? CameraMode.FirstPerson : CameraMode.ThirdPerson;
             
-            // Reset head look when switching back to 1st person
             if (currentMode == CameraMode.FirstPerson)
             {
                 fpHeadYaw = 0f;
@@ -63,8 +81,8 @@ public class CarCamera : MonoBehaviour
             }
         }
 
-        // Mouse look inputs (primarily used in 1st person mode)
-        if (currentMode == CameraMode.FirstPerson)
+        // Mouse look inputs
+        if (currentTargetMode == TargetMode.Car && currentMode == CameraMode.FirstPerson)
         {
             float mouseX = Input.GetAxis("Mouse X") * fpMouseSensitivity;
             float mouseY = Input.GetAxis("Mouse Y") * fpMouseSensitivity;
@@ -76,16 +94,33 @@ public class CarCamera : MonoBehaviour
 
     private void LateUpdate()
     {
-        if (carTransform == null || driverEyePoint == null) return;
-
-        // Calculate target transform and FOV based on mode
         Vector3 targetPosition;
         Quaternion targetRotation;
         float targetFov;
 
-        if (currentMode == CameraMode.FirstPerson)
+        if (currentTargetMode == TargetMode.Player)
         {
-            GetFirstPersonTransform(out targetPosition, out targetRotation);
+            if (playerEyePoint == null) return;
+            
+            // Follow player's head point directly
+            targetPosition = playerEyePoint.position;
+            
+            // Construct rotation using the player's forward vector projected onto the horizontal plane,
+            // combined with world up vector. This prevents camera roll/tilt artifacts.
+            Vector3 flatForward = playerEyePoint.forward;
+            flatForward.y = 0f;
+            if (flatForward.sqrMagnitude > 0.001f)
+            {
+                flatForward.Normalize();
+                Quaternion baseRotation = Quaternion.LookRotation(flatForward, Vector3.up);
+                // Retain the player's pitch from their actual rotation while stripping roll
+                targetRotation = Quaternion.Euler(playerEyePoint.eulerAngles.x, baseRotation.eulerAngles.y, 0f);
+            }
+            else
+            {
+                targetRotation = Quaternion.Euler(playerEyePoint.eulerAngles.x, playerEyePoint.eulerAngles.y, 0f);
+            }
+
             targetFov = fpFov;
 
             // Instantly snap during 1st person driving so there is zero camera lag/jitter
@@ -94,12 +129,24 @@ public class CarCamera : MonoBehaviour
         }
         else
         {
-            GetThirdPersonTransform(out targetPosition, out targetRotation);
-            targetFov = tpFov;
+            if (carTransform == null || driverEyePoint == null) return;
 
-            // Lock position directly to target (or tight lerp if transitioning modes)
-            transform.position = Vector3.Lerp(transform.position, targetPosition, Time.deltaTime * transitionSpeed);
-            transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, Time.deltaTime * transitionSpeed);
+            if (currentMode == CameraMode.FirstPerson)
+            {
+                GetFirstPersonTransform(out targetPosition, out targetRotation);
+                targetFov = fpFov;
+
+                transform.position = targetPosition;
+                transform.rotation = targetRotation;
+            }
+            else
+            {
+                GetThirdPersonTransform(out targetPosition, out targetRotation);
+                targetFov = tpFov;
+
+                transform.position = Vector3.Lerp(transform.position, targetPosition, Time.deltaTime * transitionSpeed);
+                transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, Time.deltaTime * transitionSpeed);
+            }
         }
 
         currentFov = Mathf.Lerp(currentFov, targetFov, Time.deltaTime * transitionSpeed);
