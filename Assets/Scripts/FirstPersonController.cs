@@ -69,7 +69,8 @@ public class FirstPersonController : MonoBehaviour
         // Ground check & Gravity
         if (controller.isGrounded && verticalVelocity < 0)
         {
-            verticalVelocity = -2f; // Small downward force to keep grounded state consistent
+            // Small downward force to keep grounded state consistent
+            verticalVelocity = -2f;
         }
         else
         {

@@ -10,59 +10,30 @@ public class PlayerVehicleManager : MonoBehaviour
     [SerializeField] private Transform _exitSpawnPoint; // Empty GameObject outside the driver door
     [SerializeField] private Transform _playerCameraPoint; // Empty GameObject representing the player's camera eye point
 
-    [Header("Interaction Settings")]
-    [SerializeField] private KeyCode _interactKey = KeyCode.E;
-    [SerializeField] private float _maxEntryDistance = 5.0f;
-    [SerializeField] private LayerMask _carLayer;
-
-    private Camera mainCamera;
     private bool isDriving = true;
+    public bool IsDriving => isDriving;
+
+    public static PlayerVehicleManager Instance { get; private set; }
+    
+    private void Awake()
+    {
+        if (Instance != null && Instance != this) 
+        { 
+            Destroy(this); 
+        } 
+        else 
+        { 
+            Instance = this; 
+        }
+    }
 
     private void Start()
     {
-        mainCamera = Camera.main;
-
-        if (_player == null)
-        {
-            Debug.LogWarning("Player GameObject is not assigned in PlayerVehicleManager!", this);
-        }
-
         SetDrivingState(true);
     }
 
-    private void Update()
+    public void ExitCar()
     {
-        if (isDriving)
-        {
-            if (Input.GetKeyDown(_interactKey))
-            {
-                ExitCar();
-            }
-        }
-        else
-        {
-            if (Input.GetKeyDown(_interactKey))
-            {
-                Ray ray = mainCamera.ScreenPointToRay(Input.mousePosition);
-                if (Physics.Raycast(ray, out RaycastHit hit, _maxEntryDistance, _carLayer))
-                {
-                    if (hit.collider.gameObject.transform.root == _car.transform.root)
-                    {
-                        EnterCar();
-                    }
-                }
-            }
-        }
-    }
-
-    private void ExitCar()
-    {
-        if (_player == null)
-        {
-            Debug.LogWarning("Cannot exit car: Player reference is missing!", this);
-            return;
-        }
-
         isDriving = false;
 
         // Disable car driving input (suspension physics remains active)
@@ -72,7 +43,7 @@ public class PlayerVehicleManager : MonoBehaviour
         Vector3 spawnPos = _exitSpawnPoint != null ? _exitSpawnPoint.position : _car.transform.position - _car.transform.right * 2f;
         Quaternion spawnRot = _car.transform.rotation;
 
-        // Reposition and activate the player
+        // Temporarily disable CharacterController to avoid position glitches when teleporting
         CharacterController cc = _player.GetComponent<CharacterController>();
         if (cc != null) cc.enabled = false;
 
@@ -80,27 +51,20 @@ public class PlayerVehicleManager : MonoBehaviour
         _player.transform.rotation = spawnRot;
 
         if (cc != null) cc.enabled = true;
-        _player.SetActive(true);
+
+        // Re-enable player controller scripts and physics components
+        SetPlayerComponentsActive(true);
 
         // Switch the single CarCamera to track the player's camera eye point
         _carCamera.SetTargetMode(CarCamera.TargetMode.Player, _playerCameraPoint);
-
-        // Enable first person controller script on player
-        var fpController = _player.GetComponent<FirstPersonController>();
-        if (fpController != null) fpController.enabled = true;
     }
 
     private void EnterCar()
     {
         isDriving = true;
 
-        // Disable player components/object
-        if (_player != null)
-        {
-            var fpController = _player.GetComponent<FirstPersonController>();
-            if (fpController != null) fpController.enabled = false;
-            _player.SetActive(false);
-        }
+        // Disable player controller/physics components, keeping PlayerInteraction active
+        SetPlayerComponentsActive(false);
 
         // Switch the single CarCamera back to tracking the car
         _carCamera.SetTargetMode(CarCamera.TargetMode.Car);
@@ -117,9 +81,41 @@ public class PlayerVehicleManager : MonoBehaviour
         
         if (_player != null) 
         {
-            _player.SetActive(!driving);
-            var fpController = _player.GetComponent<FirstPersonController>();
-            if (fpController != null) fpController.enabled = !driving;
+            SetPlayerComponentsActive(!driving);
+        }
+    }
+
+    private void SetPlayerComponentsActive(bool active)
+    {
+        if (_player == null) return;
+
+        // Enable or disable all MonoBehaviour scripts on the player except PlayerInteraction
+        MonoBehaviour[] scripts = _player.GetComponents<MonoBehaviour>();
+        foreach (var script in scripts)
+        {
+            if (script != null && script is not PlayerInteraction && script != this)
+            {
+                script.enabled = active;
+            }
+        }
+
+        // Also handle physics components so the player doesn't fall or collide while inside the car
+        CharacterController cc = _player.GetComponent<CharacterController>();
+        if (cc != null) cc.enabled = active;
+
+        Rigidbody rb = _player.GetComponent<Rigidbody>();
+        if (rb != null) rb.isKinematic = !active;
+    }
+
+    public void InteractWithCar()
+    {
+        if (isDriving)
+        {
+            ExitCar();
+        }
+        else
+        {
+            EnterCar();
         }
     }
 }

@@ -72,7 +72,7 @@ public class CarController : MonoBehaviour
         {
             _rawMoveInput = 0f;
             _rawSteerInput = 0f;
-            _isHandbraking = false;
+            _isHandbraking = true;
         }
     }
 
@@ -88,7 +88,7 @@ public class CarController : MonoBehaviour
         {
             _rawMoveInput = 0f;
             _rawSteerInput = 0f;
-            _isHandbraking = false;
+            _isHandbraking = true; // Keep handbrake engaged when player is out of the car
         }
 
         // Smooth steering input to emulate a physical steering wheel turning
@@ -152,9 +152,12 @@ public class CarController : MonoBehaviour
                 float accel = desiredVelChange / Time.fixedDeltaTime;
                 _rb.AddForceAtPosition(wheelRight * (wheelMass * accel), rayPoint.position);
 
-                // Acceleration, braking & handbrake (only applied when player is driving)
-                if (_isControlled)
-                {
+                // Acceleration, braking & handbrake
+
+                // Uncomment the following code to allow acceleration/braking only when the car is controlled by the player
+
+                // if (_isControlled)
+                // {
                     float forwardVel = Vector3.Dot(wheelForward, wheelWorldVel);
                     forwardVel = Mathf.Clamp(forwardVel, -_maxSpeed, _maxSpeed);
 
@@ -183,7 +186,7 @@ public class CarController : MonoBehaviour
                             _rb.AddForceAtPosition(wheelForward * (_rawMoveInput * _accelerationForce), rayPoint.position);
                         }
                     }
-                }
+                //}
             }
         }
     }
