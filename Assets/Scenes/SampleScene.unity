@@ -1972,7 +1972,7 @@ GameObject:
   - component: {fileID: 1535123766}
   - component: {fileID: 1535123765}
   m_Layer: 5
-  m_Name: Image
+  m_Name: Crosshair
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1995,7 +1995,7 @@ RectTransform:
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 10, y: 10}
+  m_SizeDelta: {x: 25, y: 25}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1535123765
 MonoBehaviour:
@@ -2017,9 +2017,9 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 0}
+  m_Sprite: {fileID: -438211692, guid: d06821fdb791f4d4ea06b912c004dcc9, type: 3}
   m_Type: 0
-  m_PreserveAspect: 0
+  m_PreserveAspect: 1
   m_FillCenter: 1
   m_FillMethod: 4
   m_FillAmount: 1
@@ -2302,20 +2302,20 @@ MonoBehaviour:
     m_Bits: 64
   _crosshairImage: {fileID: 1535123765}
   _defaultCrosshairColor: {r: 1, g: 1, b: 1, a: 1}
-  _defaultCrosshairSprite: {fileID: 0}
+  _defaultCrosshairSprite: {fileID: -438211692, guid: d06821fdb791f4d4ea06b912c004dcc9, type: 3}
   _crosshairConfigs:
   - interactionType: 0
     color: {r: 1, g: 0.42830187, b: 0.42830187, a: 1}
-    sprite: {fileID: 0}
+    sprite: {fileID: -438211692, guid: d06821fdb791f4d4ea06b912c004dcc9, type: 3}
   - interactionType: 1
     color: {r: 0.98019075, g: 1, b: 0.2471698, a: 1}
-    sprite: {fileID: 0}
+    sprite: {fileID: 525611301, guid: d06821fdb791f4d4ea06b912c004dcc9, type: 3}
   - interactionType: 2
     color: {r: 0.40566033, g: 1, b: 0.63521415, a: 1}
-    sprite: {fileID: 0}
+    sprite: {fileID: 1950682571, guid: d06821fdb791f4d4ea06b912c004dcc9, type: 3}
   - interactionType: 3
     color: {r: 0.3830188, g: 0.6213263, b: 1, a: 1}
-    sprite: {fileID: 0}
+    sprite: {fileID: 1950682571, guid: d06821fdb791f4d4ea06b912c004dcc9, type: 3}
 --- !u!1 &6293231914998650971
 GameObject:
   m_ObjectHideFlags: 0
