@@ -1,22 +1,22 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
 using System;
+using Unity.VisualScripting;
 
 public class PlayerInputs : MonoBehaviour, InputSystem_Actions.IPlayerActions
 {
+    [SerializeField] public float MouseSensitivity = 0.1f;
     public InputSystem_Actions InputActions { get; private set; }
-    
     public static Vector2 MovementValue { get; private set; }
     public static Vector2 LookValue { get; private set; }
     public static bool SprintHeld { get; private set; }
     public static bool HandbrakeHeld { get; private set; }
-    public static bool ToggleCameraPressed { get; private set; }
-
     public static event Action OnInteractPressed;
     public static event Action OnRestartPressed;
     public static event Action OnEscapePressed;
     public static event Action OnCrouchPressed;
     public static event Action OnJumpPressed;
+    public static event Action OnToggleCameraPressed;
 
     private void Awake()
     {
@@ -68,7 +68,7 @@ public class PlayerInputs : MonoBehaviour, InputSystem_Actions.IPlayerActions
 
     public void OnLook(InputAction.CallbackContext context)
     {
-        LookValue = context.ReadValue<Vector2>();
+        LookValue = context.ReadValue<Vector2>() * MouseSensitivity;
     }
 
     public void OnCrouch(InputAction.CallbackContext context)
@@ -115,7 +115,7 @@ public class PlayerInputs : MonoBehaviour, InputSystem_Actions.IPlayerActions
     {
         if (context.started)
         {
-            ToggleCameraPressed = !ToggleCameraPressed;
+            OnToggleCameraPressed?.Invoke();
         }
     }
 }

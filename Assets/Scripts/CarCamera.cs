@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.UI;
 
 public class CarCamera : MonoBehaviour
 {
@@ -19,7 +20,6 @@ public class CarCamera : MonoBehaviour
 
     [Header("1st Person Settings")]
     [SerializeField] private float fpFov = 75f;
-    [SerializeField] private float fpMouseSensitivity = 2f;
     [SerializeField] private float fpYawRange = 80f;
     [SerializeField] private float fpPitchMin = -30f;
     [SerializeField] private float fpPitchMax = 50f;
@@ -66,9 +66,32 @@ public class CarCamera : MonoBehaviour
         fpHeadPitch = 0f;
     }
 
+    private void OnEnable()
+    {
+        PlayerInputs.OnToggleCameraPressed += ToggleCamera;
+    }
+
+    private void OnDisable()
+    {
+        PlayerInputs.OnToggleCameraPressed -= ToggleCamera;
+    }
+
     private void Update()
     {
-        if (currentTargetMode == TargetMode.Car && PlayerInputs.ToggleCameraPressed)
+        if (currentTargetMode == TargetMode.Car && currentMode == CameraMode.FirstPerson)
+        {
+            Vector2 lookVal = PlayerInputs.LookValue;
+            float mouseX = lookVal.x;
+            float mouseY = lookVal.y;
+
+            fpHeadYaw = Mathf.Clamp(fpHeadYaw + mouseX, -fpYawRange, fpYawRange);
+            fpHeadPitch = Mathf.Clamp(fpHeadPitch - mouseY, fpPitchMin, fpPitchMax);
+        }
+    }
+
+    private void ToggleCamera()
+    {
+        if (currentTargetMode == TargetMode.Car)
         {
             currentMode = (currentMode == CameraMode.ThirdPerson) ? CameraMode.FirstPerson : CameraMode.ThirdPerson;
             
@@ -77,16 +100,6 @@ public class CarCamera : MonoBehaviour
                 fpHeadYaw = 0f;
                 fpHeadPitch = 0f;
             }
-        }
-
-        if (currentTargetMode == TargetMode.Car && currentMode == CameraMode.FirstPerson)
-        {
-            Vector2 lookVal = PlayerInputs.LookValue;
-            float mouseX = lookVal.x * fpMouseSensitivity;
-            float mouseY = lookVal.y * fpMouseSensitivity;
-
-            fpHeadYaw = Mathf.Clamp(fpHeadYaw + mouseX, -fpYawRange, fpYawRange);
-            fpHeadPitch = Mathf.Clamp(fpHeadPitch - mouseY, fpPitchMin, fpPitchMax);
         }
     }
 

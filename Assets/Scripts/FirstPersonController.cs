@@ -11,7 +11,6 @@ public class FirstPersonController : MonoBehaviour
 
     [Header("Look")]
     [SerializeField] private Transform _playerCamera;
-    [SerializeField] private float _mouseSensitivity = 2.0f;
     [SerializeField] private float _maxPitch = 80f;
     [SerializeField] private float _minPitch = -80f;
 
@@ -60,8 +59,8 @@ public class FirstPersonController : MonoBehaviour
     {
         // Mouse Look via PlayerInputs
         Vector2 lookVal = PlayerInputs.LookValue;
-        float mouseX = lookVal.x * _mouseSensitivity;
-        float mouseY = lookVal.y * _mouseSensitivity;
+        float mouseX = lookVal.x;
+        float mouseY = lookVal.y;
 
         transform.Rotate(Vector3.up * mouseX);
 
