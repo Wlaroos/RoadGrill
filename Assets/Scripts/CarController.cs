@@ -14,6 +14,8 @@ public class CarController : MonoBehaviour
     [SerializeField] private float _springDamping = 2500f;
     [Tooltip("Anti-roll force to prevent the car from flipping during sharp turns.")]
     [SerializeField] private float _antiRollForce = 5000f;
+    [Tooltip("Layer mask defining what objects count as the ground for suspension and wheels.")]
+    [SerializeField] private LayerMask _groundLayer = ~0;
 
     [Header("Engine & Handling Settings")]
     [Tooltip("Force applied to the car for acceleration.")]
@@ -24,6 +26,8 @@ public class CarController : MonoBehaviour
     [SerializeField] private float _brakeForce = 4000f;
     [Tooltip("Force applied to the car when using the handbrake.")]
     [SerializeField] private float _handbrakeForce = 8000f;
+    [Tooltip("Resistance force applied when no acceleration or braking input is given, causing the car to coast to a stop.")]
+    [SerializeField] private float _coastingDragForce = 500f;
     [Tooltip("Maximum steering angle for the front wheels in degrees.")]
     [SerializeField] private float _maxSteerAngle = 30f;
     [Tooltip("How fast the steering wheel turns (emulates steering wheel lock time). Higher = faster.")]
@@ -64,7 +68,7 @@ public class CarController : MonoBehaviour
         }
     }
 
-    /// Enables or disables driver input while keeping suspension and physics active.
+    // Enables or disables driver input while keeping suspension and physics active.
     public void SetDriverControl(bool controlled)
     {
         _isControlled = controlled;
@@ -123,15 +127,17 @@ public class CarController : MonoBehaviour
 
             // Local steering frame using smoothed steer input
             Quaternion steerRotation = isFrontWheel ? Quaternion.Euler(0, _smoothedSteerInput * _maxSteerAngle, 0) : Quaternion.identity;
-            Vector3 wheelForward = rayPoint.rotation * steerRotation * Vector3.forward;
-            Vector3 wheelRight = rayPoint.rotation * steerRotation * Vector3.right;
 
-            if (Physics.Raycast(rayPoint.position, -rayPoint.up, out RaycastHit hit, rayDistance))
+            if (Physics.Raycast(rayPoint.position, -rayPoint.up, out RaycastHit hit, rayDistance, _groundLayer))
             {
                 Vector3 wheelWorldVel = _rb.GetPointVelocity(rayPoint.position);
 
-                // Suspension force
-                Vector3 rayDir = rayPoint.up;
+                // Keep wheel vectors flat along the ground plane
+                Vector3 wheelForward = Vector3.ProjectOnPlane(rayPoint.rotation * steerRotation * Vector3.forward, hit.normal).normalized;
+                Vector3 wheelRight = Vector3.ProjectOnPlane(rayPoint.rotation * steerRotation * Vector3.right, hit.normal).normalized;
+
+                // Suspension force using ground normal to prevent sagging during body roll
+                Vector3 rayDir = hit.normal;
                 float currentLength = hit.distance - _wheelRadius;
                 float offset = _suspensionRestLength - currentLength;
 
@@ -153,53 +159,73 @@ public class CarController : MonoBehaviour
                 _rb.AddForceAtPosition(wheelRight * (wheelMass * accel), rayPoint.position);
 
                 // Acceleration, braking & handbrake
+                float forwardVel = Vector3.Dot(wheelForward, wheelWorldVel);
 
-                // Uncomment the following code to allow acceleration/braking only when the car is controlled by the player
+                if (_isHandbraking && !isFrontWheel)
+                {
+                    float requiredBrakeAccel = -forwardVel / Time.fixedDeltaTime;
+                    float maxBrakeAccel = _handbrakeForce / wheelMass;
+                    float finalBrakeAccel = Mathf.Clamp(requiredBrakeAccel, -maxBrakeAccel, maxBrakeAccel);
 
-                // if (_isControlled)
-                // {
-                    float forwardVel = Vector3.Dot(wheelForward, wheelWorldVel);
-                    forwardVel = Mathf.Clamp(forwardVel, -_maxSpeed, _maxSpeed);
+                    _rb.AddForceAtPosition(wheelForward * (wheelMass * finalBrakeAccel), rayPoint.position);
+                }
+                else if (_rawMoveInput != 0)
+                {
+                    bool isBraking = (_rawMoveInput > 0f && forwardVel < -0.1f) || (_rawMoveInput < 0f && forwardVel > 0.1f);
 
-                    if (_isHandbraking && !isFrontWheel)
+                    if (isBraking)
                     {
                         float requiredBrakeAccel = -forwardVel / Time.fixedDeltaTime;
-                        float maxBrakeAccel = _handbrakeForce / wheelMass;
+                        float maxBrakeAccel = _brakeForce / wheelMass;
                         float finalBrakeAccel = Mathf.Clamp(requiredBrakeAccel, -maxBrakeAccel, maxBrakeAccel);
 
                         _rb.AddForceAtPosition(wheelForward * (wheelMass * finalBrakeAccel), rayPoint.position);
                     }
-                    else if (_rawMoveInput != 0)
+                    else
                     {
-                        bool isBraking = (_rawMoveInput > 0f && forwardVel < -0.1f) || (_rawMoveInput < 0f && forwardVel > 0.1f);
+                        // Only apply acceleration if we haven't reached max speed in the direction of input
+                        bool canAccelerate = (_rawMoveInput > 0f && forwardVel < _maxSpeed) || (_rawMoveInput < 0f && forwardVel > -_maxSpeed);
 
-                        if (isBraking)
-                        {
-                            float requiredBrakeAccel = -forwardVel / Time.fixedDeltaTime;
-                            float maxBrakeAccel = _brakeForce / wheelMass;
-                            float finalBrakeAccel = Mathf.Clamp(requiredBrakeAccel, -maxBrakeAccel, maxBrakeAccel);
-
-                            _rb.AddForceAtPosition(wheelForward * (wheelMass * finalBrakeAccel), rayPoint.position);
-                        }
-                        else
+                        if (canAccelerate)
                         {
                             _rb.AddForceAtPosition(wheelForward * (_rawMoveInput * _accelerationForce), rayPoint.position);
                         }
                     }
-                //}
+                }
+                else
+                {
+                    // Apply coasting resistance when there are no inputs
+                    if (Mathf.Abs(forwardVel) > 0.1f)
+                    {
+                        float requiredBrakeAccel = -forwardVel / Time.fixedDeltaTime;
+                        float maxBrakeAccel = _coastingDragForce / wheelMass;
+                        float finalBrakeAccel = Mathf.Clamp(requiredBrakeAccel, -maxBrakeAccel, maxBrakeAccel);
+
+                        _rb.AddForceAtPosition(wheelForward * (wheelMass * finalBrakeAccel), rayPoint.position);
+                    }
+                    else
+                    {
+                        // When speed drops near zero, stop the car completely
+                        Vector3 currentVel = _rb.linearVelocity;
+                        float currentForwardSpeed = Vector3.Dot(currentVel, transform.forward);
+                        if (Mathf.Abs(currentForwardSpeed) < 0.2f)
+                        {
+                            _rb.linearVelocity = Vector3.zero;
+                        }
+                    }
+                }
             }
         }
     }
 
     private void ApplyAntiRoll(Transform wheelL, Transform wheelR, float rayDistance)
     {
-        bool groundedL = Physics.Raycast(wheelL.position, -wheelL.up, out RaycastHit hitL, rayDistance);
-        bool groundedR = Physics.Raycast(wheelR.position, -wheelR.up, out RaycastHit hitR, rayDistance);
+        bool groundedL = Physics.Raycast(wheelL.position, -wheelL.up, out RaycastHit hitL, rayDistance, _groundLayer);
+        bool groundedR = Physics.Raycast(wheelR.position, -wheelR.up, out RaycastHit hitR, rayDistance, _groundLayer);
 
         float travelL = 1.0f;
         float travelR = 1.0f;
 
-        // Calculate suspension travel for each wheel
         if (groundedL)
         {
             travelL = (-wheelL.InverseTransformPoint(hitL.point).y - _wheelRadius) / _suspensionRestLength;
@@ -212,14 +238,13 @@ public class CarController : MonoBehaviour
 
         float antiRollForceFactor = (travelL - travelR) * _antiRollForce;
 
-        // Apply anti-roll forces to each wheel if grounded
         if (groundedL)
         {
-            _rb.AddForceAtPosition(wheelL.up * -antiRollForceFactor, wheelL.position);
+            _rb.AddForceAtPosition(hitL.normal * -antiRollForceFactor, wheelL.position);
         }
         if (groundedR)
         {
-            _rb.AddForceAtPosition(wheelR.up * antiRollForceFactor, wheelR.position);
+            _rb.AddForceAtPosition(hitR.normal * antiRollForceFactor, wheelR.position);
         }
     }
 
@@ -239,7 +264,7 @@ public class CarController : MonoBehaviour
             bool isFrontWheel = (i < 2);
 
             Vector3 targetWorldPos;
-            if (Physics.Raycast(rayPoint.position, -rayPoint.up, out RaycastHit hit, rayDistance))
+            if (Physics.Raycast(rayPoint.position, -rayPoint.up, out RaycastHit hit, rayDistance, _groundLayer))
             {
                 targetWorldPos = hit.point + (rayPoint.up * _wheelRadius);
             }
@@ -268,18 +293,38 @@ public class CarController : MonoBehaviour
         }
     }
 
-    private void OnDrawGizmosSelected()
+    private void OnCollisionEnter(Collision collision)
     {
-        if (_wheelRaycastPoints == null) return;
-
-        Gizmos.color = Color.green;
-        float rayDistance = _suspensionRestLength + _wheelRadius;
-        foreach (Transform rayPoint in _wheelRaycastPoints)
+        Animal animal = collision.gameObject.GetComponent<Animal>();
+        if (animal != null)
         {
-            if (rayPoint != null)
+            float impactVelocity = collision.relativeVelocity.magnitude;
+            animal.HandleCarHit(impactVelocity);
+        }
+    }
+
+    private void OnTriggerEnter(Collider other)
+    {
+        Animal animal = other.GetComponent<Animal>() ?? other.GetComponentInParent<Animal>();
+        if (animal != null)
+        {
+            float impactVelocity = _rb.linearVelocity.magnitude;
+            animal.HandleCarHit(impactVelocity);
+        }
+    }
+
+        private void OnDrawGizmosSelected()
+        {
+            if (_wheelRaycastPoints == null) return;
+
+            Gizmos.color = Color.green;
+            float rayDistance = _suspensionRestLength + _wheelRadius;
+            foreach (Transform rayPoint in _wheelRaycastPoints)
             {
-                Gizmos.DrawRay(rayPoint.position, -rayPoint.up * rayDistance);
+                if (rayPoint != null)
+                {
+                    Gizmos.DrawRay(rayPoint.position, -rayPoint.up * rayDistance);
+                }
             }
         }
     }
-}

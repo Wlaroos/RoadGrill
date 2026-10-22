@@ -15,6 +15,10 @@ public class Interactable : MonoBehaviour, IInteractable
     [SerializeField] private InteractionType _interactionType = InteractionType.Default;
     public InteractionType InteractionType => _interactionType;
 
+    public virtual void Awake()
+    {
+        
+    }
     public virtual void Interact()
     {
         // Base interaction event or override in child classes
