@@ -1,5 +1,6 @@
 using UnityEngine;
 using System;
+using Unity.VisualScripting;
 
 public enum InteractionType
 {
@@ -15,9 +16,12 @@ public class Interactable : MonoBehaviour, IInteractable
     [SerializeField] private InteractionType _interactionType = InteractionType.Default;
     public InteractionType InteractionType => _interactionType;
 
+    private PlayerInventory _playerInv;
+    public PlayerInventory PlayerInventory => _playerInv;
+
     public virtual void Awake()
     {
-        
+        _playerInv = FindFirstObjectByType<PlayerInventory>();
     }
     public virtual void Interact()
     {

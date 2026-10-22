@@ -4,13 +4,16 @@ using UnityEngine;
 [RequireComponent(typeof(Collider))]
 public class Animal : Interactable
 {
+    [Header("Inventory Integration")]
+    [SerializeField] private AnimalItemData _animalItemData;
+    public AnimalItemData AnimalItemData => _animalItemData;
+    
     [Header("Animal Stats")]
-    [SerializeField] private float _maxHealth = 100f;
     [SerializeField] private float _velocityDamageMultiplier = 5f;
     [SerializeField] private float _hitCooldown = 0.75f; // Debounce to prevent multiple damage/flatten triggers in a single pass
 
     [Header("Flattening Settings (Dead Body)")]
-    [SerializeField] private int _flatIndex = 0;
+    private int _flatIndex = 0;
     [SerializeField] private int _maxFlatIndex = 3;
     [SerializeField] private float _flattenAmountY = 0.15f; // Decrease Y scale per hit
     [SerializeField] private float _stretchAmountXZ = 0.1f; // Increase X/Z scale per hit
@@ -30,7 +33,7 @@ public class Animal : Interactable
     public override void Awake()
     {
         base.Awake();
-        _currentHealth = _maxHealth;
+        _currentHealth = _animalItemData.maxHealth;
         _rb = GetComponent<Rigidbody>();
         _originalScale = transform.localScale;
 
@@ -72,7 +75,7 @@ public class Animal : Interactable
         if (_isDead) return;
 
         _currentHealth -= amount;
-        Debug.Log($"{gameObject.name} took {amount:F1} damage. Health: {_currentHealth:F1} / {_maxHealth}");
+        Debug.Log($"{gameObject.name} took {amount:F1} damage. Health: {_currentHealth:F1} / {_animalItemData.maxHealth}");
 
         if (_currentHealth <= 0f)
         {
@@ -124,12 +127,11 @@ public class Animal : Interactable
         base.Interact();
         if (_isDead)
         {
-            Debug.Log($"Adding Flat:{_flatIndex} {gameObject.name} to inventory.");
-
-            // Add the animal to your inventory system here, passing the flat index
-            // Example: PlayerInventory.Instance.AddAnimalItem(gameObject.name, _flatIndex);
-
-            Destroy(gameObject);
+            if (PlayerInventory != null && _animalItemData != null)
+            {
+                PlayerInventory.AddItem(_animalItemData, 1, _flatIndex);
+                Destroy(gameObject);
+            }
         }
     }
 }

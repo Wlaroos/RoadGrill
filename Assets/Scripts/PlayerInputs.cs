@@ -17,6 +17,7 @@ public class PlayerInputs : MonoBehaviour, InputSystem_Actions.IPlayerActions
     public static event Action OnCrouchPressed;
     public static event Action OnJumpPressed;
     public static event Action OnToggleCameraPressed;
+    public static event Action OnInventoryPressed;
 
     private void Awake()
     {
@@ -116,6 +117,14 @@ public class PlayerInputs : MonoBehaviour, InputSystem_Actions.IPlayerActions
         if (context.started)
         {
             OnToggleCameraPressed?.Invoke();
+        }
+    }
+
+    public void OnInventory(InputAction.CallbackContext context)
+    {
+        if (context.started)
+        {
+            OnInventoryPressed?.Invoke();
         }
     }
 }
