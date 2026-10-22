@@ -84,9 +84,10 @@ public class CarController : MonoBehaviour
     {
         if (_isControlled)
         {
-            _rawMoveInput = Input.GetAxis("Vertical");
-            _rawSteerInput = Input.GetAxis("Horizontal");
-            _isHandbraking = Input.GetKey(KeyCode.Space);
+            Vector2 moveVal = PlayerInputs.MovementValue;
+            _rawMoveInput = moveVal.y;
+            _rawSteerInput = moveVal.x;
+            _isHandbraking = PlayerInputs.HandbrakeHeld;
         }
         else
         {
@@ -313,18 +314,18 @@ public class CarController : MonoBehaviour
         }
     }
 
-        private void OnDrawGizmosSelected()
-        {
-            if (_wheelRaycastPoints == null) return;
+    private void OnDrawGizmosSelected()
+    {
+        if (_wheelRaycastPoints == null) return;
 
-            Gizmos.color = Color.green;
-            float rayDistance = _suspensionRestLength + _wheelRadius;
-            foreach (Transform rayPoint in _wheelRaycastPoints)
+        Gizmos.color = Color.green;
+        float rayDistance = _suspensionRestLength + _wheelRadius;
+        foreach (Transform rayPoint in _wheelRaycastPoints)
+        {
+            if (rayPoint != null)
             {
-                if (rayPoint != null)
-                {
-                    Gizmos.DrawRay(rayPoint.position, -rayPoint.up * rayDistance);
-                }
+                Gizmos.DrawRay(rayPoint.position, -rayPoint.up * rayDistance);
             }
         }
     }
+}

@@ -10,7 +10,7 @@ public class FirstPersonController : MonoBehaviour
     [SerializeField] private float _gravity = -9.81f;
 
     [Header("Look")]
-    [SerializeField] private Transform _playerCamera; // Assign your "PlayerEyePoint" transform here in the Inspector
+    [SerializeField] private Transform _playerCamera;
     [SerializeField] private float _mouseSensitivity = 2.0f;
     [SerializeField] private float _maxPitch = 80f;
     [SerializeField] private float _minPitch = -80f;
@@ -18,12 +18,12 @@ public class FirstPersonController : MonoBehaviour
     private CharacterController controller;
     private float verticalVelocity;
     private float cameraPitch = 0f;
+    private bool jumpRequested = false;
 
     private void Awake()
     {
         controller = GetComponent<CharacterController>();
         
-        // Fallback if not assigned in Inspector: looks for child named "PlayerEyePoint"
         if (_playerCamera == null)
         {
             Transform eyePoint = transform.Find("PlayerEyePoint");
@@ -37,16 +37,31 @@ public class FirstPersonController : MonoBehaviour
             }
         }
 
-        // Lock cursor to center of screen and hide it
         Cursor.lockState = CursorLockMode.Locked;
         Cursor.visible = false;
     }
 
+    private void OnEnable()
+    {
+        PlayerInputs.OnJumpPressed += HandleJumpPressed;
+    }
+
+    private void OnDisable()
+    {
+        PlayerInputs.OnJumpPressed -= HandleJumpPressed;
+    }
+
+    private void HandleJumpPressed()
+    {
+        jumpRequested = true;
+    }
+
     private void Update()
     {
-        // Mouse Look
-        float mouseX = Input.GetAxis("Mouse X") * _mouseSensitivity;
-        float mouseY = Input.GetAxis("Mouse Y") * _mouseSensitivity;
+        // Mouse Look via PlayerInputs
+        Vector2 lookVal = PlayerInputs.LookValue;
+        float mouseX = lookVal.x * _mouseSensitivity;
+        float mouseY = lookVal.y * _mouseSensitivity;
 
         transform.Rotate(Vector3.up * mouseX);
 
@@ -56,12 +71,13 @@ public class FirstPersonController : MonoBehaviour
             _playerCamera.localRotation = Quaternion.Euler(cameraPitch, 0f, 0f);
         }
 
-        // Movement Input
-        float moveX = Input.GetAxis("Horizontal");
-        float moveZ = Input.GetAxis("Vertical");
+        // Movement Input via PlayerInputs
+        Vector2 moveVal = PlayerInputs.MovementValue;
+        float moveX = moveVal.x;
+        float moveZ = moveVal.y;
 
         // Sprinting
-        bool isSprinting = Input.GetKey(KeyCode.LeftShift);
+        bool isSprinting = PlayerInputs.SprintHeld;
         float currentSpeed = isSprinting ? _moveSpeed * _sprintMultiplier : _moveSpeed;
 
         Vector3 moveDir = transform.right * moveX + transform.forward * moveZ;
@@ -69,7 +85,6 @@ public class FirstPersonController : MonoBehaviour
         // Ground check & Gravity
         if (controller.isGrounded && verticalVelocity < 0)
         {
-            // Small downward force to keep grounded state consistent
             verticalVelocity = -2f;
         }
         else
@@ -77,14 +92,13 @@ public class FirstPersonController : MonoBehaviour
             verticalVelocity += _gravity * Time.deltaTime;
         }
 
-        // Jumping (Only jump if grounded)
-        if (Input.GetButtonDown("Jump") && controller.isGrounded)
+        // Jumping
+        if (jumpRequested && controller.isGrounded)
         {
-            // Physics formula: v = sqrt(h * -2 * g)
             verticalVelocity = Mathf.Sqrt(_jumpHeight * -2f * _gravity);
         }
+        jumpRequested = false;
 
-        // Combine movement and apply via CharacterController
         Vector3 velocity = moveDir * currentSpeed + Vector3.up * verticalVelocity;
         controller.Move(velocity * Time.deltaTime);
     }

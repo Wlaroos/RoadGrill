@@ -7,16 +7,15 @@ public class CarCamera : MonoBehaviour
 
     [Header("Mode & Keybinds")]
     [SerializeField] private CameraMode currentMode = CameraMode.ThirdPerson;
-    [SerializeField] private KeyCode toggleKey = KeyCode.V;
-    [SerializeField] private float transitionSpeed = 10f; // Fast lerp for smooth mode switching
+    [SerializeField] private float transitionSpeed = 10f;
 
     [Header("Target & Tracking (Car)")]
     [SerializeField] private Transform carTransform;
-    [SerializeField] private Transform driverEyePoint; // Empty GameObject at driver's head
+    [SerializeField] private Transform driverEyePoint;
     [SerializeField] private Rigidbody carRigidbody;
 
     [Header("Target & Tracking (Player)")]
-    [SerializeField] private Transform playerEyePoint; // Assigned dynamically by PlayerVehicleManager when exiting
+    [SerializeField] private Transform playerEyePoint;
 
     [Header("1st Person Settings")]
     [SerializeField] private float fpFov = 75f;
@@ -69,8 +68,7 @@ public class CarCamera : MonoBehaviour
 
     private void Update()
     {
-        // Toggle mode on keypress (only when driving car in 3rd/1st person)
-        if (currentTargetMode == TargetMode.Car && Input.GetKeyDown(toggleKey))
+        if (currentTargetMode == TargetMode.Car && PlayerInputs.ToggleCameraPressed)
         {
             currentMode = (currentMode == CameraMode.ThirdPerson) ? CameraMode.FirstPerson : CameraMode.ThirdPerson;
             
@@ -81,11 +79,11 @@ public class CarCamera : MonoBehaviour
             }
         }
 
-        // Mouse look inputs
         if (currentTargetMode == TargetMode.Car && currentMode == CameraMode.FirstPerson)
         {
-            float mouseX = Input.GetAxis("Mouse X") * fpMouseSensitivity;
-            float mouseY = Input.GetAxis("Mouse Y") * fpMouseSensitivity;
+            Vector2 lookVal = PlayerInputs.LookValue;
+            float mouseX = lookVal.x * fpMouseSensitivity;
+            float mouseY = lookVal.y * fpMouseSensitivity;
 
             fpHeadYaw = Mathf.Clamp(fpHeadYaw + mouseX, -fpYawRange, fpYawRange);
             fpHeadPitch = Mathf.Clamp(fpHeadPitch - mouseY, fpPitchMin, fpPitchMax);

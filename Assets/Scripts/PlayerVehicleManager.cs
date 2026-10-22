@@ -48,7 +48,8 @@ public class PlayerVehicleManager : MonoBehaviour
         if (cc != null) cc.enabled = false;
 
         _player.transform.position = spawnPos;
-        _player.transform.rotation = spawnRot;
+        Vector3 playerEuler = _player.transform.eulerAngles;
+        _player.transform.rotation = Quaternion.Euler(playerEuler.x, spawnRot.eulerAngles.y, playerEuler.z);
 
         if (cc != null) cc.enabled = true;
 

@@ -12,9 +12,6 @@ public class PlayerInteraction : MonoBehaviour
         public Sprite sprite;
     }
 
-    [Header("Interaction Settings")]
-    [SerializeField] private KeyCode _interactKey = KeyCode.E;
-
     [Header("Raycast Settings")]
     [SerializeField] private float _interactionRange = 3.5f;
     [SerializeField] private LayerMask _interactionLayer;
@@ -47,6 +44,16 @@ public class PlayerInteraction : MonoBehaviour
         ApplyDefaultCrosshair();
     }
 
+    private void OnEnable()
+    {
+        PlayerInputs.OnInteractPressed += HandleInteractionInputEvent;
+    }
+
+    private void OnDisable()
+    {
+        PlayerInputs.OnInteractPressed -= HandleInteractionInputEvent;
+    }
+
     private void BuildLookupDictionary()
     {
         _configLookup = new Dictionary<InteractionType, CrosshairConfig>();
@@ -63,18 +70,36 @@ public class PlayerInteraction : MonoBehaviour
     {
         bool isDriving = PlayerVehicleManager.Instance != null && PlayerVehicleManager.Instance.IsDriving;
 
-        // Handle crosshair visibility and inputs based on driving state
+        // Handle crosshair visibility based on driving state
         if (isDriving)
         {
             SetCrosshairVisible(false);
             ClearCurrentInteractable();
-            HandleDrivingExitInput();
         }
         else
         {
             SetCrosshairVisible(true);
             CheckForInteractable();
-            HandleInteractionInput();
+        }
+    }
+
+    private void HandleInteractionInputEvent()
+    {
+        bool isDriving = PlayerVehicleManager.Instance != null && PlayerVehicleManager.Instance.IsDriving;
+
+        if (isDriving)
+        {
+            if (PlayerVehicleManager.Instance != null)
+            {
+                PlayerVehicleManager.Instance.ExitCar();
+            }
+        }
+        else
+        {
+            if (_currentInteractable != null)
+            {
+                _currentInteractable.Interact();
+            }
         }
     }
 
@@ -88,7 +113,6 @@ public class PlayerInteraction : MonoBehaviour
 
     private void CheckForInteractable()
     {
-        // Raycast from the exact center of the screen
         Ray ray = _mainCamera.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0f));
         
         if (Physics.Raycast(ray, out RaycastHit hit, _interactionRange, _interactionLayer))
@@ -108,7 +132,6 @@ public class PlayerInteraction : MonoBehaviour
             }
         }
 
-        // If nothing hit or out of range
         ClearCurrentInteractable();
         ApplyDefaultCrosshair();
     }
@@ -156,14 +179,6 @@ public class PlayerInteraction : MonoBehaviour
         }
     }
 
-    private void HandleInteractionInput()
-    {
-        if (_currentInteractable != null && Input.GetKeyDown(_interactKey))
-        {
-            _currentInteractable.Interact();
-        }
-    }
-
     private void SetImageSizeAndPivotOffset(Sprite sprite, float width, float height)
     {
         if (_rt != null)
@@ -173,23 +188,10 @@ public class PlayerInteraction : MonoBehaviour
             Vector2 pivot = sprite.pivot;
             Vector2 normalizedPivot = new Vector2(pivot.x / sprite.rect.width, pivot.y / sprite.rect.height);
             
-            // Calculate offset displacement from (0.5, 0.5) center
             float offsetX = (0.5f - normalizedPivot.x) * width;
             float offsetY = (0.5f - normalizedPivot.y) * height;
 
             _rt.anchoredPosition = new Vector2(offsetX, offsetY);
-        }
-    }
-
-    private void HandleDrivingExitInput()
-    {
-        // Pressing the interact key while driving exits the vehicle
-        if (Input.GetKeyDown(_interactKey))
-        {
-            if (PlayerVehicleManager.Instance != null)
-            {
-                PlayerVehicleManager.Instance.ExitCar();
-            }
         }
     }
 }
