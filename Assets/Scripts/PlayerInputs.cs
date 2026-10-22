@@ -11,6 +11,8 @@ public class PlayerInputs : MonoBehaviour, InputSystem_Actions.IPlayerActions
     public static Vector2 LookValue { get; private set; }
     public static bool SprintHeld { get; private set; }
     public static bool HandbrakeHeld { get; private set; }
+    public static bool LeanHeld { get; private set; }
+    public static event Action OnLeanPressed;
     public static event Action OnInteractPressed;
     public static event Action OnRestartPressed;
     public static event Action OnEscapePressed;
@@ -125,6 +127,19 @@ public class PlayerInputs : MonoBehaviour, InputSystem_Actions.IPlayerActions
         if (context.started)
         {
             OnInventoryPressed?.Invoke();
+        }
+    }
+
+    public void OnLean(InputAction.CallbackContext context)
+    {
+        if (context.started)
+        {
+            OnLeanPressed?.Invoke();
+            LeanHeld = true;
+        }
+        else if (context.canceled)
+        {
+            LeanHeld = false;
         }
     }
 }

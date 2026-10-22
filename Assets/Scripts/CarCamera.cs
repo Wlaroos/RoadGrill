@@ -12,11 +12,16 @@ public class CarCamera : MonoBehaviour
 
     [Header("Target & Tracking (Car)")]
     [SerializeField] private Transform carTransform;
-    [SerializeField] private Transform driverEyePoint;
     [SerializeField] private Rigidbody carRigidbody;
+    [SerializeField] private Transform driverEyePoint;
+    [SerializeField] private Transform driverLeanPoint;
+
+    [Header("Lean Settings")]
+    [SerializeField] private bool holdToLean = true; 
+    [SerializeField] private float leanTransitionSpeed = 15f;
 
     [Header("Target & Tracking (Player)")]
-    [SerializeField] private Transform playerEyePoint;
+    [SerializeField] private Transform playerEyePoint; // Fallback / Inspector assigned reference
 
     [Header("1st Person Settings")]
     [SerializeField] private float fpFov = 75f;
@@ -29,19 +34,18 @@ public class CarCamera : MonoBehaviour
     [SerializeField] private float tpDistance = 6f;
     [SerializeField] private float tpHeight = 2.2f;
     [SerializeField] private float tpLookAtHeight = 1.2f;
-    [SerializeField] private LayerMask obstacleLayers; // Layers to check for camera collision clipping
+    [SerializeField] private LayerMask obstacleLayers; 
 
-    // Camera component reference
     private Camera cam;
-
-    // First person head rotation state
     private float fpHeadYaw = 0f;
     private float fpHeadPitch = 0f;
-
-    // Smooth transition tracking
     private float currentFov;
-
     private TargetMode currentTargetMode = TargetMode.Car;
+
+    // Runtime tracking for player override if passed dynamically
+    private Transform dynamicPlayerEyePoint;
+    private bool isLeaning = false;
+    private float leanProgress = 0f;
 
     private void Start()
     {
@@ -58,34 +62,50 @@ public class CarCamera : MonoBehaviour
         currentTargetMode = mode;
         if (mode == TargetMode.Player && newPlayerEye != null)
         {
-            playerEyePoint = newPlayerEye;
+            dynamicPlayerEyePoint = newPlayerEye;
         }
         
-        // Reset look angles on switch
         fpHeadYaw = 0f;
         fpHeadPitch = 0f;
+        isLeaning = false;
+        leanProgress = 0f;
     }
 
     private void OnEnable()
     {
         PlayerInputs.OnToggleCameraPressed += ToggleCamera;
+        PlayerInputs.OnLeanPressed += HandleLeanPressed;
     }
 
     private void OnDisable()
     {
         PlayerInputs.OnToggleCameraPressed -= ToggleCamera;
+        PlayerInputs.OnLeanPressed -= HandleLeanPressed;
+    }
+
+    private void HandleLeanPressed()
+    {
+        if (!holdToLean && currentTargetMode == TargetMode.Car)
+        {
+            isLeaning = !isLeaning;
+        }
     }
 
     private void Update()
     {
-        if (currentTargetMode == TargetMode.Car && currentMode == CameraMode.FirstPerson)
+        if (currentTargetMode == TargetMode.Car)
         {
-            Vector2 lookVal = PlayerInputs.LookValue;
-            float mouseX = lookVal.x;
-            float mouseY = lookVal.y;
+            if (holdToLean)
+            {
+                isLeaning = PlayerInputs.LeanHeld;
+            }
 
-            fpHeadYaw = Mathf.Clamp(fpHeadYaw + mouseX, -fpYawRange, fpYawRange);
-            fpHeadPitch = Mathf.Clamp(fpHeadPitch - mouseY, fpPitchMin, fpPitchMax);
+            if (currentMode == CameraMode.FirstPerson)
+            {
+                Vector2 lookVal = PlayerInputs.LookValue;
+                fpHeadYaw = Mathf.Clamp(fpHeadYaw + lookVal.x, -fpYawRange, fpYawRange);
+                fpHeadPitch = Mathf.Clamp(fpHeadPitch - lookVal.y, fpPitchMin, fpPitchMax);
+            }
         }
     }
 
@@ -94,7 +114,6 @@ public class CarCamera : MonoBehaviour
         if (currentTargetMode == TargetMode.Car)
         {
             currentMode = (currentMode == CameraMode.ThirdPerson) ? CameraMode.FirstPerson : CameraMode.ThirdPerson;
-            
             if (currentMode == CameraMode.FirstPerson)
             {
                 fpHeadYaw = 0f;
@@ -111,30 +130,25 @@ public class CarCamera : MonoBehaviour
 
         if (currentTargetMode == TargetMode.Player)
         {
-            if (playerEyePoint == null) return;
+            Transform activePlayerEye = dynamicPlayerEyePoint != null ? dynamicPlayerEyePoint : playerEyePoint;
+            if (activePlayerEye == null) return;
             
-            // Follow player's head point directly
-            targetPosition = playerEyePoint.position;
+            targetPosition = activePlayerEye.position;
             
-            // Construct rotation using the player's forward vector projected onto the horizontal plane,
-            // combined with world up vector. This prevents camera roll/tilt artifacts.
-            Vector3 flatForward = playerEyePoint.forward;
+            Vector3 flatForward = activePlayerEye.forward;
             flatForward.y = 0f;
             if (flatForward.sqrMagnitude > 0.001f)
             {
                 flatForward.Normalize();
                 Quaternion baseRotation = Quaternion.LookRotation(flatForward, Vector3.up);
-                // Retain the player's pitch from their actual rotation while stripping roll
-                targetRotation = Quaternion.Euler(playerEyePoint.eulerAngles.x, baseRotation.eulerAngles.y, 0f);
+                targetRotation = Quaternion.Euler(activePlayerEye.eulerAngles.x, baseRotation.eulerAngles.y, 0f);
             }
             else
             {
-                targetRotation = Quaternion.Euler(playerEyePoint.eulerAngles.x, playerEyePoint.eulerAngles.y, 0f);
+                targetRotation = Quaternion.Euler(activePlayerEye.eulerAngles.x, activePlayerEye.eulerAngles.y, 0f);
             }
 
             targetFov = fpFov;
-
-            // Instantly snap during 1st person driving so there is zero camera lag/jitter
             transform.position = targetPosition;
             transform.rotation = targetRotation;
         }
@@ -166,36 +180,43 @@ public class CarCamera : MonoBehaviour
 
     private void GetFirstPersonTransform(out Vector3 position, out Quaternion rotation)
     {
-        position = driverEyePoint.position;
-        
-        // Combine vehicle orientation with driver look offset
-        Quaternion carRotation = driverEyePoint.rotation;
+        Quaternion baseRotation;
+
+        if (driverLeanPoint != null)
+        {
+            leanProgress = Mathf.MoveTowards(leanProgress, isLeaning ? 1f : 0f, Time.deltaTime * leanTransitionSpeed);
+            position = Vector3.Lerp(driverEyePoint.position, driverLeanPoint.position, leanProgress);
+            baseRotation = Quaternion.Slerp(driverEyePoint.rotation, driverLeanPoint.rotation, leanProgress);
+        }
+        else
+        {
+            position = driverEyePoint.position;
+            baseRotation = driverEyePoint.rotation;
+        }
+
         Quaternion headLook = Quaternion.Euler(fpHeadPitch, fpHeadYaw, 0f);
-        rotation = carRotation * headLook;
+        rotation = baseRotation * headLook;
     }
 
     private void GetThirdPersonTransform(out Vector3 position, out Quaternion rotation)
     {
-        // Position camera directly behind and above relative to the car's orientation
         Vector3 idealPosition = carTransform.position 
             - (carTransform.forward * tpDistance) 
             + (carTransform.up * tpHeight);
 
-        // Obstacle Collision Detection (Prevents clipping through terrain/walls)
         Vector3 rayOrigin = carTransform.position + carTransform.up * tpLookAtHeight;
         Vector3 rayDirection = idealPosition - rayOrigin;
         float rayDistance = rayDirection.magnitude;
 
         if (Physics.Raycast(rayOrigin, rayDirection.normalized, out RaycastHit hit, rayDistance, obstacleLayers))
         {
-            position = hit.point + hit.normal * 0.2f; // Push slightly off hit surface
+            position = hit.point + hit.normal * 0.2f;
         }
         else
         {
             position = idealPosition;
         }
 
-        // Aim camera at car direction
         Vector3 lookAtTarget = carTransform.position + (carTransform.up * tpLookAtHeight);
         rotation = Quaternion.LookRotation(lookAtTarget - position, carTransform.up);
     }

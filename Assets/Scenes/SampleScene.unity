@@ -605,9 +605,12 @@ MonoBehaviour:
   currentMode: 1
   transitionSpeed: 15
   carTransform: {fileID: 344648646}
-  driverEyePoint: {fileID: 2125246403}
   carRigidbody: {fileID: 344648642}
-  playerEyePoint: {fileID: 0}
+  driverEyePoint: {fileID: 2125246403}
+  driverLeanPoint: {fileID: 1161040685}
+  holdToLean: 1
+  leanTransitionSpeed: 3
+  playerEyePoint: {fileID: 356318596338164657}
   fpFov: 75
   fpYawRange: 80
   fpPitchMin: -30
@@ -618,7 +621,7 @@ MonoBehaviour:
   tpLookAtHeight: 1.2
   obstacleLayers:
     serializedVersion: 2
-    m_Bits: 1
+    m_Bits: 129
 --- !u!1 &344648640
 GameObject:
   m_ObjectHideFlags: 0
@@ -744,6 +747,7 @@ Transform:
   - {fileID: 1128213269}
   - {fileID: 1295075797}
   - {fileID: 2125246403}
+  - {fileID: 1161040685}
   - {fileID: 1367033131}
   - {fileID: 2128166866}
   m_Father: {fileID: 0}
@@ -1503,6 +1507,37 @@ Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: 6ca4219cf980e8e47ad83a4f3256ac93, type: 3}
   m_PrefabInstance: {fileID: 1166529046}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &1161040684
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1161040685}
+  m_Layer: 6
+  m_Name: Driver Lean Transform
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1161040685
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1161040684}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0.06975647, w: 0.9975641}
+  m_LocalPosition: {x: -1.449, y: 1, z: -0.25}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 344648646}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 8}
 --- !u!1001 &1166529046
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -2314,7 +2349,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: -0.25, y: 1, z: -0.25}
-  m_LocalScale: {x: 2.5, y: 1, z: 4}
+  m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 344648646}
