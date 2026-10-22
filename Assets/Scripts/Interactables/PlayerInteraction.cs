@@ -21,7 +21,8 @@ public class PlayerInteraction : MonoBehaviour
 
     [Header("UI References")]
     [SerializeField] private Image _crosshairImage; // Crosshair image at screen center
-    
+    [SerializeField] private float _crosshairScale = 3f;
+
     [Header("Default Crosshair")]
     [SerializeField] private Color _defaultCrosshairColor = Color.white;
     [SerializeField] private Sprite _defaultCrosshairSprite;
@@ -29,6 +30,7 @@ public class PlayerInteraction : MonoBehaviour
     [Header("Target Specific Crosshairs")]
     [SerializeField] private List<CrosshairConfig> _crosshairConfigs = new List<CrosshairConfig>();
 
+    private RectTransform _rt;
     private Camera _mainCamera;
     private Interactable _currentInteractable;
     private Dictionary<InteractionType, CrosshairConfig> _configLookup;
@@ -41,6 +43,7 @@ public class PlayerInteraction : MonoBehaviour
     private void Start()
     {
         _mainCamera = Camera.main;
+        _rt = _crosshairImage.GetComponent<RectTransform>();
         ApplyDefaultCrosshair();
     }
 
@@ -120,6 +123,9 @@ public class PlayerInteraction : MonoBehaviour
             if (config.sprite != null)
             {
                 _crosshairImage.sprite = config.sprite;
+                float width = config.sprite.rect.width * _crosshairScale;
+                float height = config.sprite.rect.height * _crosshairScale;
+                SetImageSizeAndPivotOffset(config.sprite, width, height);
             }
         }
         else
@@ -136,6 +142,9 @@ public class PlayerInteraction : MonoBehaviour
         if (_defaultCrosshairSprite != null)
         {
             _crosshairImage.sprite = _defaultCrosshairSprite;
+            float width = _defaultCrosshairSprite.rect.width * _crosshairScale;
+            float height = _defaultCrosshairSprite.rect.height * _crosshairScale;
+            SetImageSizeAndPivotOffset(_defaultCrosshairSprite, width, height);
         }
     }
 
@@ -152,6 +161,23 @@ public class PlayerInteraction : MonoBehaviour
         if (_currentInteractable != null && Input.GetKeyDown(_interactKey))
         {
             _currentInteractable.Interact();
+        }
+    }
+
+    private void SetImageSizeAndPivotOffset(Sprite sprite, float width, float height)
+    {
+        if (_rt != null)
+        {
+            _rt.sizeDelta = new Vector2(width, height);
+
+            Vector2 pivot = sprite.pivot;
+            Vector2 normalizedPivot = new Vector2(pivot.x / sprite.rect.width, pivot.y / sprite.rect.height);
+            
+            // Calculate offset displacement from (0.5, 0.5) center
+            float offsetX = (0.5f - normalizedPivot.x) * width;
+            float offsetY = (0.5f - normalizedPivot.y) * height;
+
+            _rt.anchoredPosition = new Vector2(offsetX, offsetY);
         }
     }
 
