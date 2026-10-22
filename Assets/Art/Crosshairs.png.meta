@@ -135,12 +135,12 @@ TextureImporter:
       name: Crosshairs_1
       rect:
         serializedVersion: 2
-        x: 9
+        x: 10
         y: 2
-        width: 11
-        height: 11
-      alignment: 1
-      pivot: {x: 0, y: 1}
+        width: 9
+        height: 12
+      alignment: 9
+      pivot: {x: 0.22222222, y: 0.8333334}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -160,9 +160,9 @@ TextureImporter:
         x: 21
         y: 2
         width: 12
-        height: 12
-      alignment: 0
-      pivot: {x: 0.5, y: 0.5}
+        height: 13
+      alignment: 9
+      pivot: {x: 0.25, y: 0.84615386}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -171,6 +171,28 @@ TextureImporter:
       bones: []
       spriteID: 753d4810bf69ec845b5952b3487f98f7
       internalID: 525611301
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Crosshairs_3
+      rect:
+        serializedVersion: 2
+        x: 35
+        y: 2
+        width: 12
+        height: 16
+      alignment: 9
+      pivot: {x: 0.25, y: 0.875}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 5c17bfaea11f1d3458b82b6bf722be4a
+      internalID: -1835296659
       vertices: []
       indices: 
       edges: []
@@ -194,6 +216,7 @@ TextureImporter:
       Crosshairs_0: -438211692
       Crosshairs_1: 1950682571
       Crosshairs_2: 525611301
+      Crosshairs_3: -1835296659
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

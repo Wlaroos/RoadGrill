@@ -3564,10 +3564,10 @@ MonoBehaviour:
     sprite: {fileID: -438211692, guid: d06821fdb791f4d4ea06b912c004dcc9, type: 3}
   - interactionType: 1
     color: {r: 0.98019075, g: 1, b: 0.2471698, a: 1}
-    sprite: {fileID: 525611301, guid: d06821fdb791f4d4ea06b912c004dcc9, type: 3}
+    sprite: {fileID: -1835296659, guid: d06821fdb791f4d4ea06b912c004dcc9, type: 3}
   - interactionType: 2
     color: {r: 0.40566033, g: 1, b: 0.63521415, a: 1}
-    sprite: {fileID: 1950682571, guid: d06821fdb791f4d4ea06b912c004dcc9, type: 3}
+    sprite: {fileID: 525611301, guid: d06821fdb791f4d4ea06b912c004dcc9, type: 3}
   - interactionType: 3
     color: {r: 0.3830188, g: 0.6213263, b: 1, a: 1}
     sprite: {fileID: 1950682571, guid: d06821fdb791f4d4ea06b912c004dcc9, type: 3}
