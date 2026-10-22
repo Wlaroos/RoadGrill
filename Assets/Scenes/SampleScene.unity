@@ -805,7 +805,7 @@ Transform:
   m_GameObject: {fileID: 344648640}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 1.3, z: 0}
+  m_LocalPosition: {x: 0, y: 1.87, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -1754,7 +1754,7 @@ Transform:
   m_GameObject: {fileID: 1092314465}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0.8724855, z: -0, w: 0.4886401}
-  m_LocalPosition: {x: 0.964316, y: 0.729, z: 13.61842}
+  m_LocalPosition: {x: 0.964316, y: 1.075, z: 13.61842}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -2836,7 +2836,7 @@ RectTransform:
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 25, y: 25}
+  m_SizeDelta: {x: 24, y: 24}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1535123765
 MonoBehaviour:
@@ -3555,6 +3555,7 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 64
   _crosshairImage: {fileID: 1535123765}
+  _crosshairScale: 3
   _defaultCrosshairColor: {r: 1, g: 1, b: 1, a: 1}
   _defaultCrosshairSprite: {fileID: -438211692, guid: d06821fdb791f4d4ea06b912c004dcc9, type: 3}
   _crosshairConfigs:
