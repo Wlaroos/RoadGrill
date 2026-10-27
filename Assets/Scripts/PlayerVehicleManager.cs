@@ -1,4 +1,5 @@
 using UnityEngine;
+using System;
 
 public class PlayerVehicleManager : MonoBehaviour
 {
@@ -7,11 +8,13 @@ public class PlayerVehicleManager : MonoBehaviour
     [SerializeField] private CarController _carController;
     [SerializeField] private CarCamera _carCamera;
     [SerializeField] private GameObject _player;
+    [SerializeField] private FirstPersonController _firstPersonController; // Added direct reference
     [SerializeField] private Transform _exitSpawnPoint;
     [SerializeField] private Transform _playerCameraPoint; 
 
     private bool isDriving = true;
     public bool IsDriving => isDriving;
+    public static event Action<bool> OnDrivingStateChanged;
 
     public static PlayerVehicleManager Instance { get; private set; }
     
@@ -24,6 +27,12 @@ public class PlayerVehicleManager : MonoBehaviour
         else 
         { 
             Instance = this; 
+        }
+
+        // Auto-find FirstPersonController if left unassigned
+        if (_firstPersonController == null && _player != null)
+        {
+            _firstPersonController = _player.GetComponent<FirstPersonController>();
         }
     }
 
@@ -50,22 +59,32 @@ public class PlayerVehicleManager : MonoBehaviour
 
         if (cc != null) cc.enabled = true;
 
-        SetPlayerComponentsActive(true);
+        SetDrivingState(false);
 
-        // Switch to player mode and pass the player's camera point
         _carCamera.SetTargetMode(CarCamera.TargetMode.Player, _playerCameraPoint);
+
+        // Explicitly enable player inputs and movement controller
+        PlayerInputs playerInputs = _player.GetComponent<PlayerInputs>();
+        playerInputs?.EnablePlayerInputs();
+
+        if (_firstPersonController != null)
+        {
+            _firstPersonController.enabled = true;
+        }
     }
 
     private void EnterCar()
     {
         isDriving = true;
+        SetDrivingState(true);
 
-        SetPlayerComponentsActive(false);
-
-        // Switch back to car mode (CarCamera manages its own driver/lean points)
         _carCamera.SetTargetMode(CarCamera.TargetMode.Car);
-
         _carController.SetDriverControl(true);
+
+        if (_firstPersonController != null)
+        {
+            _firstPersonController.enabled = false;
+        }
     }
 
     private void SetDrivingState(bool driving)
@@ -82,30 +101,26 @@ public class PlayerVehicleManager : MonoBehaviour
             _carCamera.SetTargetMode(CarCamera.TargetMode.Player, _playerCameraPoint);
         }
         
+        // Broadcast event so scripts turn themselves off/on
+        OnDrivingStateChanged?.Invoke(driving);
+
         if (_player != null) 
         {
-            SetPlayerComponentsActive(!driving);
+            // Toggle physical player body components
+            CharacterController cc = _player.GetComponent<CharacterController>();
+            if (cc != null) cc.enabled = !driving;
+
+            Rigidbody rb = _player.GetComponent<Rigidbody>();
+            if (rb != null) rb.isKinematic = true; // MUST remain kinematic so it doesn't conflict with CharacterController
+
+            // Can hide/show the player model if they get inside the car
+            // .SetActive(!driving); 
         }
-    }
 
-    private void SetPlayerComponentsActive(bool active)
-    {
-        if (_player == null) return;
-
-        MonoBehaviour[] scripts = _player.GetComponents<MonoBehaviour>();
-        foreach (var script in scripts)
+        if (_firstPersonController != null)
         {
-            if (script != null && script is not PlayerInteraction && script != this)
-            {
-                script.enabled = active;
-            }
+            _firstPersonController.enabled = !driving;
         }
-
-        CharacterController cc = _player.GetComponent<CharacterController>();
-        if (cc != null) cc.enabled = active;
-
-        Rigidbody rb = _player.GetComponent<Rigidbody>();
-        if (rb != null) rb.isKinematic = !active;
     }
 
     public void InteractWithCar()

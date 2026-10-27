@@ -1,47 +1,28 @@
 using UnityEngine;
-using UnityEngine.UI;
 using System.Collections.Generic;
 
 public class PlayerInteraction : MonoBehaviour
 {
-    [System.Serializable]
-    public struct CrosshairConfig
-    {
-        public InteractionType interactionType;
-        public Color color;
-        public Sprite sprite;
-    }
-
     [Header("Raycast Settings")]
     [SerializeField] private float _interactionRange = 3.5f;
     [SerializeField] private LayerMask _interactionLayer;
 
     [Header("UI References")]
-    [SerializeField] private Image _crosshairImage; // Crosshair image at screen center
-    [SerializeField] private float _crosshairScale = 3f;
+    [SerializeField] private Crosshair _crosshair; // Reference to the new Crosshair component
 
-    [Header("Default Crosshair")]
-    [SerializeField] private Color _defaultCrosshairColor = Color.white;
-    [SerializeField] private Sprite _defaultCrosshairSprite;
-
-    [Header("Target Specific Crosshairs")]
-    [SerializeField] private List<CrosshairConfig> _crosshairConfigs = new List<CrosshairConfig>();
-
-    private RectTransform _rt;
     private Camera _mainCamera;
     private Interactable _currentInteractable;
-    private Dictionary<InteractionType, CrosshairConfig> _configLookup;
-
-    private void Awake()
-    {
-        BuildLookupDictionary();
-    }
+    private PlayerInventory _playerInventory;
 
     private void Start()
     {
         _mainCamera = Camera.main;
-        _rt = _crosshairImage.GetComponent<RectTransform>();
-        ApplyDefaultCrosshair();
+        _playerInventory = FindFirstObjectByType<PlayerInventory>();
+        
+        if (_crosshair != null)
+        {
+            _crosshair.ApplyDefaultCrosshair();
+        }
     }
 
     private void OnEnable()
@@ -54,38 +35,40 @@ public class PlayerInteraction : MonoBehaviour
         PlayerInputs.OnInteractPressed -= HandleInteractionInputEvent;
     }
 
-    private void BuildLookupDictionary()
-    {
-        _configLookup = new Dictionary<InteractionType, CrosshairConfig>();
-        foreach (var config in _crosshairConfigs)
-        {
-            if (!_configLookup.ContainsKey(config.interactionType))
-            {
-                _configLookup.Add(config.interactionType, config);
-            }
-        }
-    }
-
     private void Update()
     {
         bool isDriving = PlayerVehicleManager.Instance != null && PlayerVehicleManager.Instance.IsDriving;
+        bool isInventoryOpen = _playerInventory != null && _playerInventory.IsInventoryOpen;
 
-        // Handle crosshair visibility based on driving state
-        if (isDriving)
+        // Handle crosshair visibility and styling based on game state
+        if (isInventoryOpen)
         {
-            SetCrosshairVisible(false);
+            SetCrosshairVisible(true);
             ClearCurrentInteractable();
+            ApplyCrosshairForType(InteractionType.DefaultUI);
         }
         else
         {
-            SetCrosshairVisible(true);
-            CheckForInteractable();
+            if (isDriving)
+            {
+                SetCrosshairVisible(false);
+                ClearCurrentInteractable();
+            }
+            else
+            {
+                SetCrosshairVisible(true);
+                CheckForInteractable();
+            }
         }
     }
 
     private void HandleInteractionInputEvent()
     {
         bool isDriving = PlayerVehicleManager.Instance != null && PlayerVehicleManager.Instance.IsDriving;
+        bool isInventoryOpen = _playerInventory != null && _playerInventory.IsInventoryOpen;
+
+        // Prevent world interactions if inventory is currently open
+        if (isInventoryOpen) return;
 
         if (isDriving)
         {
@@ -105,9 +88,9 @@ public class PlayerInteraction : MonoBehaviour
 
     private void SetCrosshairVisible(bool visible)
     {
-        if (_crosshairImage != null)
+        if (_crosshair != null)
         {
-            _crosshairImage.gameObject.SetActive(visible);
+            _crosshair.SetVisible(visible);
         }
     }
 
@@ -138,36 +121,17 @@ public class PlayerInteraction : MonoBehaviour
 
     private void ApplyCrosshairForType(InteractionType type)
     {
-        if (_crosshairImage == null) return;
-
-        if (_configLookup != null && _configLookup.TryGetValue(type, out CrosshairConfig config))
+        if (_crosshair != null)
         {
-            _crosshairImage.color = config.color;
-            if (config.sprite != null)
-            {
-                _crosshairImage.sprite = config.sprite;
-                float width = config.sprite.rect.width * _crosshairScale;
-                float height = config.sprite.rect.height * _crosshairScale;
-                SetImageSizeAndPivotOffset(config.sprite, width, height);
-            }
-        }
-        else
-        {
-            ApplyDefaultCrosshair();
+            _crosshair.ApplyCrosshairForType(type);
         }
     }
 
     private void ApplyDefaultCrosshair()
     {
-        if (_crosshairImage == null) return;
-
-        _crosshairImage.color = _defaultCrosshairColor;
-        if (_defaultCrosshairSprite != null)
+        if (_crosshair != null)
         {
-            _crosshairImage.sprite = _defaultCrosshairSprite;
-            float width = _defaultCrosshairSprite.rect.width * _crosshairScale;
-            float height = _defaultCrosshairSprite.rect.height * _crosshairScale;
-            SetImageSizeAndPivotOffset(_defaultCrosshairSprite, width, height);
+            _crosshair.ApplyDefaultCrosshair();
         }
     }
 
@@ -176,22 +140,6 @@ public class PlayerInteraction : MonoBehaviour
         if (_currentInteractable != null)
         {
             _currentInteractable = null;
-        }
-    }
-
-    private void SetImageSizeAndPivotOffset(Sprite sprite, float width, float height)
-    {
-        if (_rt != null)
-        {
-            _rt.sizeDelta = new Vector2(width, height);
-
-            Vector2 pivot = sprite.pivot;
-            Vector2 normalizedPivot = new Vector2(pivot.x / sprite.rect.width, pivot.y / sprite.rect.height);
-            
-            float offsetX = (0.5f - normalizedPivot.x) * width;
-            float offsetY = (0.5f - normalizedPivot.y) * height;
-
-            _rt.anchoredPosition = new Vector2(offsetX, offsetY);
         }
     }
 }

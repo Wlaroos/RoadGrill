@@ -20,24 +20,22 @@ public class PlayerInputs : MonoBehaviour, InputSystem_Actions.IPlayerActions
     public static event Action OnJumpPressed;
     public static event Action OnToggleCameraPressed;
     public static event Action OnInventoryPressed;
+    private bool playerInputsDisabled;
 
     private void Awake()
     {
         InputActions = new InputSystem_Actions();
+        InputActions.Player.SetCallbacks(this);
     }
 
     private void OnEnable()
     {
-        InputActions.Player.Enable();
-        InputActions.Player.SetCallbacks(this);
+        EnablePlayerInputs();
     }
 
     private void OnDisable()
     {
-        SprintHeld = false;
-        HandbrakeHeld = false;
-        InputActions.Player.Disable();
-        InputActions.Player.RemoveCallbacks(this);
+        DisablePlayerInputs();
     }
 
     public void OnMove(InputAction.CallbackContext context)
@@ -65,7 +63,14 @@ public class PlayerInputs : MonoBehaviour, InputSystem_Actions.IPlayerActions
     {
         if (context.started)
         {
-            OnEscapePressed?.Invoke();
+            if(playerInputsDisabled)
+            {
+                OnInventoryPressed?.Invoke();
+            }
+            else
+            {
+                OnEscapePressed?.Invoke();
+            }
         }
     }
 
@@ -141,5 +146,51 @@ public class PlayerInputs : MonoBehaviour, InputSystem_Actions.IPlayerActions
         {
             LeanHeld = false;
         }
+    }
+
+    public void DisablePlayerInputs()
+    {
+        playerInputsDisabled = true;
+
+        MovementValue = Vector2.zero;
+        LookValue = Vector2.zero;
+        SprintHeld = false;
+        HandbrakeHeld = false;
+        LeanHeld = false;
+        
+        // Selectively disable movement/gameplay inputs
+        InputActions.Player.Move.Disable();
+        InputActions.Player.Look.Disable();
+        InputActions.Player.Crouch.Disable();
+        InputActions.Player.Sprint.Disable();
+        InputActions.Player.Interact.Disable();
+        InputActions.Player.Jump.Disable();
+        InputActions.Player.Lean.Disable();
+        InputActions.Player.ToggleCamera.Disable();
+        InputActions.Player.Handbrake.Disable();
+
+        InputActions.Player.Inventory.Enable();
+        InputActions.Player.Restart.Enable();
+        InputActions.Player.Escape.Enable();
+    }
+
+    public void EnablePlayerInputs()
+    {
+        playerInputsDisabled = false;
+        
+        // Re-enable the inputs
+        InputActions.Player.Move.Enable();
+        InputActions.Player.Look.Enable();
+        InputActions.Player.Jump.Enable();
+        InputActions.Player.Crouch.Enable();
+        InputActions.Player.Sprint.Enable();
+        InputActions.Player.Lean.Enable();
+        InputActions.Player.Interact.Enable();
+        InputActions.Player.ToggleCamera.Enable();
+        InputActions.Player.Handbrake.Enable();
+
+        InputActions.Player.Inventory.Enable();
+        InputActions.Player.Restart.Enable();
+        InputActions.Player.Escape.Enable();
     }
 }

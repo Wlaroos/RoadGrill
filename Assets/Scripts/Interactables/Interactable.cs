@@ -5,6 +5,7 @@ using Unity.VisualScripting;
 public enum InteractionType
 {
     Default,
+    DefaultUI,
     Vehicle,
     Item,
     NPC

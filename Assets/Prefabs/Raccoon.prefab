@@ -1007,7 +1007,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 346a272394053a24389f8afca874208f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Animal
-  _interactionType: 2
+  _interactionType: 3
   _animalItemData: {fileID: 11400000, guid: 46a791030dced0046bd66ce2d503b9d4, type: 2}
   _velocityDamageMultiplier: 5
   _hitCooldown: 0.75
