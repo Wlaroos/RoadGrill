@@ -1,6 +1,5 @@
 using UnityEngine;
 
-[RequireComponent(typeof(CarController))]
 public class CarInteractable : Interactable
 {
     [SerializeField] private PlayerVehicleManager _vehicleManager;

@@ -2,7 +2,7 @@ using UnityEngine;
 
 [RequireComponent(typeof(Rigidbody))]
 [RequireComponent(typeof(Collider))]
-public class Animal : Interactable
+public class AnimalInteractable : Interactable
 {
     [Header("Inventory Integration")]
     [SerializeField] private AnimalItemData _animalItemData;
@@ -121,7 +121,7 @@ public class Animal : Interactable
         }
     }
 
-    // Override Interact from Interactable base class (integrates with PlayerInteraction)
+    // Override Interact from Interactable base class
     public override void Interact()
     {
         base.Interact();

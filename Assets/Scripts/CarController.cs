@@ -296,7 +296,7 @@ public class CarController : MonoBehaviour
 
     private void OnCollisionEnter(Collision collision)
     {
-        Animal animal = collision.gameObject.GetComponent<Animal>();
+        AnimalInteractable animal = collision.gameObject.GetComponent<AnimalInteractable>();
         if (animal != null)
         {
             float impactVelocity = collision.relativeVelocity.magnitude;
@@ -306,7 +306,7 @@ public class CarController : MonoBehaviour
 
     private void OnTriggerEnter(Collider other)
     {
-        Animal animal = other.GetComponent<Animal>() ?? other.GetComponentInParent<Animal>();
+        AnimalInteractable animal = other.GetComponent<AnimalInteractable>() ?? other.GetComponentInParent<AnimalInteractable>();
         if (animal != null)
         {
             float impactVelocity = _rb.linearVelocity.magnitude;
