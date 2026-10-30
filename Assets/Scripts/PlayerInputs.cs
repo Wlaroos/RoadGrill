@@ -20,6 +20,8 @@ public class PlayerInputs : MonoBehaviour, InputSystem_Actions.IPlayerActions
     public static event Action OnJumpPressed;
     public static event Action OnToggleCameraPressed;
     public static event Action OnInventoryPressed;
+    public static event Action OnClicked;
+    public static event Action OnRightClicked;
     private bool playerInputsDisabled;
 
     private void Awake()
@@ -148,6 +150,45 @@ public class PlayerInputs : MonoBehaviour, InputSystem_Actions.IPlayerActions
         }
     }
 
+    public void OnClick(InputAction.CallbackContext context)
+    {
+        if (context.started)
+        {
+            OnClicked?.Invoke();
+        }
+    }
+
+    public void OnRightClick(InputAction.CallbackContext context)
+    {
+        if (context.started)
+        {
+            OnRightClicked?.Invoke();
+        }
+    }
+
+    public void EnablePlayerInputs()
+    {
+        playerInputsDisabled = false;
+
+        // Re-enable the inputs
+        InputActions.Player.Move.Enable();
+        InputActions.Player.Look.Enable();
+        InputActions.Player.Jump.Enable();
+        InputActions.Player.Crouch.Enable();
+        InputActions.Player.Sprint.Enable();
+        InputActions.Player.Lean.Enable();
+        InputActions.Player.Interact.Enable();
+        InputActions.Player.ToggleCamera.Enable();
+        InputActions.Player.Handbrake.Enable();
+
+        InputActions.Player.Click.Enable();
+        InputActions.Player.RightClick.Enable();
+
+        InputActions.Player.Inventory.Enable();
+        InputActions.Player.Restart.Enable();
+        InputActions.Player.Escape.Enable();
+    }
+
     public void DisablePlayerInputs()
     {
         playerInputsDisabled = true;
@@ -169,25 +210,8 @@ public class PlayerInputs : MonoBehaviour, InputSystem_Actions.IPlayerActions
         InputActions.Player.ToggleCamera.Disable();
         InputActions.Player.Handbrake.Disable();
 
-        InputActions.Player.Inventory.Enable();
-        InputActions.Player.Restart.Enable();
-        InputActions.Player.Escape.Enable();
-    }
-
-    public void EnablePlayerInputs()
-    {
-        playerInputsDisabled = false;
-        
-        // Re-enable the inputs
-        InputActions.Player.Move.Enable();
-        InputActions.Player.Look.Enable();
-        InputActions.Player.Jump.Enable();
-        InputActions.Player.Crouch.Enable();
-        InputActions.Player.Sprint.Enable();
-        InputActions.Player.Lean.Enable();
-        InputActions.Player.Interact.Enable();
-        InputActions.Player.ToggleCamera.Enable();
-        InputActions.Player.Handbrake.Enable();
+        InputActions.Player.Click.Enable();
+        InputActions.Player.RightClick.Enable();
 
         InputActions.Player.Inventory.Enable();
         InputActions.Player.Restart.Enable();
