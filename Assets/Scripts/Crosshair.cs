@@ -113,17 +113,12 @@ public class Crosshair : MonoBehaviour
         {
             _rt.sizeDelta = new Vector2(width, height);
 
-            // Calculate pivot offsets if crosshair needs centered positioning when locked
-            if (Cursor.lockState == CursorLockMode.Locked)
-            {
-                Vector2 pivot = sprite.pivot;
-                Vector2 normalizedPivot = new Vector2(pivot.x / sprite.rect.width, pivot.y / sprite.rect.height);
+            Vector2 pivot = sprite.pivot;
+            Vector2 normalizedPivot = new Vector2(pivot.x / sprite.rect.width, pivot.y / sprite.rect.height);
 
-                float offsetX = (0.5f - normalizedPivot.x) * width;
-                float offsetY = (0.5f - normalizedPivot.y) * height;
+            _rt.pivot = normalizedPivot;
 
-                _rt.anchoredPosition = new Vector2(offsetX, offsetY);
-            }
+            _rt.anchoredPosition = Vector2.zero;
         }
     }
 }

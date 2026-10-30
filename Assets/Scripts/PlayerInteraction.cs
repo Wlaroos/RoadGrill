@@ -8,16 +8,15 @@ public class PlayerInteraction : MonoBehaviour
     [SerializeField] private LayerMask _interactionLayer;
 
     [Header("UI References")]
-    [SerializeField] private Crosshair _crosshair; // Reference to the new Crosshair component
+    [SerializeField] private Crosshair _crosshair;
 
     private Camera _mainCamera;
     private Interactable _currentInteractable;
-    private PlayerInventory _playerInventory;
+    private bool _isInteractCheckActive = true;
 
     private void Start()
     {
         _mainCamera = Camera.main;
-        _playerInventory = FindFirstObjectByType<PlayerInventory>();
         
         if (_crosshair != null)
         {
@@ -28,36 +27,65 @@ public class PlayerInteraction : MonoBehaviour
     private void OnEnable()
     {
         PlayerInputs.OnInteractPressed += HandleInteractionInputEvent;
+        PlayerInventory.OnInventoryStateChanged += HandleInventoryStateChanged;
+        PlayerVehicleManager.OnDrivingStateChanged += HandleDrivingStateChanged;
     }
 
     private void OnDisable()
     {
         PlayerInputs.OnInteractPressed -= HandleInteractionInputEvent;
+        PlayerInventory.OnInventoryStateChanged -= HandleInventoryStateChanged;
+        PlayerVehicleManager.OnDrivingStateChanged -= HandleDrivingStateChanged;
     }
 
     private void Update()
     {
-        bool isDriving = PlayerVehicleManager.Instance != null && PlayerVehicleManager.Instance.IsDriving;
-        bool isInventoryOpen = _playerInventory != null && _playerInventory.IsInventoryOpen;
-
-        // Handle crosshair visibility and styling based on game state
-        if (isInventoryOpen)
+        // Only run the raycast check when actively on foot and inventory is closed
+        if (_isInteractCheckActive)
         {
+            CheckForInteractable();
+        }
+    }
+
+    private void HandleInventoryStateChanged(bool isOpen)
+    {
+        if (isOpen)
+        {
+            _isInteractCheckActive = false;
             SetCrosshairVisible(true);
             ClearCurrentInteractable();
             ApplyCrosshairForType(InteractionType.DefaultUI);
         }
         else
         {
-            if (isDriving)
+            // Resume interaction checks only if not currently driving
+            bool isDriving = PlayerVehicleManager.Instance != null && PlayerVehicleManager.Instance.IsDriving;
+            if (!isDriving)
             {
-                SetCrosshairVisible(false);
-                ClearCurrentInteractable();
-            }
-            else
-            {
+                _isInteractCheckActive = true;
                 SetCrosshairVisible(true);
-                CheckForInteractable();
+            }
+        }
+    }
+
+    private void HandleDrivingStateChanged(bool isDriving)
+    {
+        if (isDriving)
+        {
+            _isInteractCheckActive = false;
+            SetCrosshairVisible(false);
+            ClearCurrentInteractable();
+        }
+        else
+        {
+            // Resume interaction checks only if inventory is closed
+            PlayerInventory inventory = FindFirstObjectByType<PlayerInventory>();
+            bool isInventoryOpen = inventory != null && inventory.IsInventoryOpen;
+            
+            if (!isInventoryOpen)
+            {
+                _isInteractCheckActive = true;
+                SetCrosshairVisible(true);
             }
         }
     }
@@ -65,24 +93,18 @@ public class PlayerInteraction : MonoBehaviour
     private void HandleInteractionInputEvent()
     {
         bool isDriving = PlayerVehicleManager.Instance != null && PlayerVehicleManager.Instance.IsDriving;
-        bool isInventoryOpen = _playerInventory != null && _playerInventory.IsInventoryOpen;
+        PlayerInventory inventory = FindFirstObjectByType<PlayerInventory>();
+        bool isInventoryOpen = inventory != null && inventory.IsInventoryOpen;
 
-        // Prevent world interactions if inventory is currently open
         if (isInventoryOpen) return;
 
         if (isDriving)
         {
-            if (PlayerVehicleManager.Instance != null)
-            {
-                PlayerVehicleManager.Instance.ExitCar();
-            }
+            PlayerVehicleManager.Instance?.ExitCar();
         }
-        else
+        else if (_currentInteractable != null)
         {
-            if (_currentInteractable != null)
-            {
-                _currentInteractable.Interact();
-            }
+            _currentInteractable.Interact();
         }
     }
 

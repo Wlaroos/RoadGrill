@@ -572,6 +572,7 @@ GameObject:
   - component: {fileID: 2597175311361333112}
   - component: {fileID: 6875952378270781530}
   - component: {fileID: 831848590448813948}
+  - component: {fileID: 4163753667432161891}
   m_Layer: 5
   m_Name: InventoryItemUI
   m_TagString: Untagged
@@ -637,3 +638,21 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 1
+--- !u!114 &4163753667432161891
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7722316353860825142}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 939cbb2a1cfde5849a616c10392aa3b6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::InventoryItemUI
+  _defaultColor:
+    serializedVersion: 2
+    rgba: 4278190080
+  _hoverColor:
+    serializedVersion: 2
+    rgba: 4278190183

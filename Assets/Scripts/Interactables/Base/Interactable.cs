@@ -8,7 +8,8 @@ public enum InteractionType
     DefaultUI,
     Vehicle,
     Item,
-    NPC
+    NPC,
+    InventoryInteract
 }
 
 [RequireComponent(typeof(Collider))]

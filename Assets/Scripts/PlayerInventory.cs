@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
+using System;
 
 public class PlayerInventory : MonoBehaviour
 {
@@ -10,12 +11,16 @@ public class PlayerInventory : MonoBehaviour
     [Space]
     [SerializeField] private PlayerInputs _playerInputs;
     [Space]
+    [SerializeField] private Crosshair _crosshair;
+    [Space]
     [SerializeField] private List<InventoryItem> _inventoryItems = new List<InventoryItem>();
     public IReadOnlyList<InventoryItem> InventoryItems => _inventoryItems;
     private bool _invOpen = false;
     public bool IsInventoryOpen => _invOpen;
     private List<GameObject> _uiPool = new List<GameObject>();
     private CanvasGroup _inventoryUICanvasGroup;
+
+    public static event Action<bool> OnInventoryStateChanged;
 
     private void OnEnable()
     {
@@ -64,12 +69,12 @@ public class PlayerInventory : MonoBehaviour
             }
 
             UpdateInventoryUI();
-
             _invOpen = true;
-
             Cursor.lockState = CursorLockMode.Confined;
-
             _playerInputs?.DisablePlayerInputs();
+
+            // Broadcast that inventory opened
+            OnInventoryStateChanged?.Invoke(true);
         }
         else
         {
@@ -81,10 +86,11 @@ public class PlayerInventory : MonoBehaviour
             }
 
             _invOpen = false;
-
             Cursor.lockState = CursorLockMode.Locked;
-
             _playerInputs?.EnablePlayerInputs();
+
+            // Broadcast that inventory closed
+            OnInventoryStateChanged?.Invoke(false);
         }
     }
 
@@ -127,6 +133,13 @@ public class PlayerInventory : MonoBehaviour
         TextMeshProUGUI flatIndexText = layoutGroupTransform.GetChild(1).GetComponent<TextMeshProUGUI>();
         TextMeshProUGUI nameText = layoutGroupTransform.GetChild(2).GetComponent<TextMeshProUGUI>();
         TextMeshProUGUI amountText = layoutGroupTransform.GetChild(3).GetComponent<TextMeshProUGUI>();
+
+        InventoryItemUI itemUIComponent = itemUI.GetComponent<InventoryItemUI>();
+        if (itemUIComponent == null)
+        {
+            itemUIComponent = itemUI.AddComponent<InventoryItemUI>();
+        }
+        itemUIComponent.Initialize(item._itemData, _crosshair);
 
         // Set Icon
         if (iconImage != null)
