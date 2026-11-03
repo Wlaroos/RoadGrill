@@ -130,7 +130,7 @@ public class PlayerInteraction : MonoBehaviour
                 {
                     ClearCurrentInteractable();
                     _currentInteractable = hitInteractable;
-                    _currentInteractable.OnHover(); 
+                    _currentInteractable.RaycastHover(); 
                 }
 
                 // Pass the crosshair data from the interactable
@@ -163,7 +163,7 @@ public class PlayerInteraction : MonoBehaviour
     {
         if (_currentInteractable != null)
         {
-            _currentInteractable.OnUnhover(); // Trigger unhover event on the interactable
+            _currentInteractable.RaycastUnhover();
             _currentInteractable = null;
         }
     }

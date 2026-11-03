@@ -31,11 +31,11 @@ public class Interactable : MonoBehaviour, IInteractable
         Debug.LogFormat("Interacted with {0}", gameObject.name);
     }
 
-    public virtual void OnHover()
+    public virtual void RaycastHover()
     {
     }
 
-    public virtual void OnUnhover()
+    public virtual void RaycastUnhover()
     {
     }
 }

@@ -15,15 +15,15 @@ public class GrillInteractable : Interactable
         base.Interact();
     }
 
-    public override void OnHover()
+    public override void RaycastHover()
     {
-        base.OnHover();
+        base.RaycastHover();
 
         _r.material = _hoverMat;
     }
-    public override void OnUnhover()
+    public override void RaycastUnhover()
     {
-        base.OnUnhover();
+        base.RaycastUnhover();
 
         _r.material = _defaultMat;
     }
