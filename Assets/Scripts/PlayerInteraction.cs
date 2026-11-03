@@ -40,7 +40,7 @@ public class PlayerInteraction : MonoBehaviour
 
     private void Update()
     {
-        // Only run the raycast check when actively on foot and inventory is closed
+        // Only run the raycast check when on foot and inventory is closed
         if (_isInteractCheckActive)
         {
             CheckForInteractable();
@@ -122,17 +122,19 @@ public class PlayerInteraction : MonoBehaviour
         
         if (Physics.Raycast(ray, out RaycastHit hit, _interactionRange, _interactionLayer))
         {
-            Interactable interactable = hit.collider.GetComponentInParent<Interactable>();
+            Interactable hitInteractable = hit.collider.GetComponentInParent<Interactable>();
 
-            if (interactable != null)
+            if (hitInteractable != null)
             {
-                if (_currentInteractable != interactable)
+                if (_currentInteractable != hitInteractable)
                 {
                     ClearCurrentInteractable();
-                    _currentInteractable = interactable;
+                    _currentInteractable = hitInteractable;
+                    _currentInteractable.OnHover(); 
                 }
 
-                ApplyCrosshairForType(interactable.InteractionType);
+                // Pass the crosshair data from the interactable
+                ApplyCrosshairForType(_currentInteractable.InteractionType);
                 return;
             }
         }
@@ -161,6 +163,7 @@ public class PlayerInteraction : MonoBehaviour
     {
         if (_currentInteractable != null)
         {
+            _currentInteractable.OnUnhover(); // Trigger unhover event on the interactable
             _currentInteractable = null;
         }
     }

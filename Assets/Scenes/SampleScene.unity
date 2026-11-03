@@ -1677,7 +1677,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: 18510f22622a6b244b45d89c94ed4688, type: 2}
+  - {fileID: 2100000, guid: 6263605e3344e254396f073acdd9fcbe, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -1743,6 +1743,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GrillInteractable
   _interactionType: 0
+  _defaultMat: {fileID: 2100000, guid: 6263605e3344e254396f073acdd9fcbe, type: 2}
+  _hoverMat: {fileID: 2100000, guid: 18510f22622a6b244b45d89c94ed4688, type: 2}
 --- !u!1 &485972561
 GameObject:
   m_ObjectHideFlags: 0
@@ -2630,7 +2632,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: 18510f22622a6b244b45d89c94ed4688, type: 2}
+  - {fileID: 2100000, guid: 6263605e3344e254396f073acdd9fcbe, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -2696,6 +2698,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GrillInteractable
   _interactionType: 0
+  _defaultMat: {fileID: 2100000, guid: 6263605e3344e254396f073acdd9fcbe, type: 2}
+  _hoverMat: {fileID: 2100000, guid: 18510f22622a6b244b45d89c94ed4688, type: 2}
 --- !u!1 &1003446335
 GameObject:
   m_ObjectHideFlags: 0
@@ -4220,7 +4224,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: 18510f22622a6b244b45d89c94ed4688, type: 2}
+  - {fileID: 2100000, guid: 6263605e3344e254396f073acdd9fcbe, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -4285,7 +4289,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6e2af3df64e3eb245b4f7a87d7ae5727, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ChopTableInteractable
-  _interactionType: 1
+  _interactionType: 0
+  _defaultMat: {fileID: 2100000, guid: 6263605e3344e254396f073acdd9fcbe, type: 2}
+  _hoverMat: {fileID: 2100000, guid: 18510f22622a6b244b45d89c94ed4688, type: 2}
 --- !u!1 &1529594324
 GameObject:
   m_ObjectHideFlags: 0
@@ -4801,7 +4807,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: 18510f22622a6b244b45d89c94ed4688, type: 2}
+  - {fileID: 2100000, guid: 6263605e3344e254396f073acdd9fcbe, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -4867,6 +4873,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GrillInteractable
   _interactionType: 0
+  _defaultMat: {fileID: 2100000, guid: 6263605e3344e254396f073acdd9fcbe, type: 2}
+  _hoverMat: {fileID: 2100000, guid: 18510f22622a6b244b45d89c94ed4688, type: 2}
 --- !u!1 &2030893987
 GameObject:
   m_ObjectHideFlags: 0
@@ -5224,7 +5232,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: 18510f22622a6b244b45d89c94ed4688, type: 2}
+  - {fileID: 2100000, guid: 6263605e3344e254396f073acdd9fcbe, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -5290,6 +5298,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GrillInteractable
   _interactionType: 0
+  _defaultMat: {fileID: 2100000, guid: 6263605e3344e254396f073acdd9fcbe, type: 2}
+  _hoverMat: {fileID: 2100000, guid: 18510f22622a6b244b45d89c94ed4688, type: 2}
 --- !u!1 &2079373604
 GameObject:
   m_ObjectHideFlags: 0
