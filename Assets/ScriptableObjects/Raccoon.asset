@@ -15,8 +15,13 @@ MonoBehaviour:
   itemName: Raccoon
   itemID: Raccoon
   icon: {fileID: 0}
-  maxStackSize: 3
+  isChoppable: 1
+  choppedItem: {fileID: 0}
+  isGrillable: 0
+  grilledItem: {fileID: 0}
   isStackable: 1
+  maxStackSize: 3
+  isSellable: 1
   value: 50
   maxHealth: 100
   flatValueMultipliers:

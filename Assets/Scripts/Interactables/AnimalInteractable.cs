@@ -129,7 +129,7 @@ public class AnimalInteractable : Interactable
         {
             if (PlayerInventory != null && _animalItemData != null)
             {
-                PlayerInventory.AddItem(_animalItemData, 1, _flatIndex);
+                PlayerInventory.AddItem(_animalItemData, 1, _flatIndex, _animalItemData.isChoppable, _animalItemData.isGrillable);
                 Destroy(gameObject);
             }
         }

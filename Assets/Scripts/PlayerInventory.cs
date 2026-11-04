@@ -4,6 +4,13 @@ using UnityEngine.UI;
 using TMPro;
 using System;
 
+public enum InvType
+{
+    Inventory,
+    ChopTable,
+    Grill
+}
+
 public class PlayerInventory : MonoBehaviour
 {
     [SerializeField] private GameObject _inventoryUIPanel;
@@ -197,7 +204,7 @@ public class PlayerInventory : MonoBehaviour
         };
     }
 
-    public void AddItem(ItemData data, int amount = 1, int flatIndex = -1)
+    public void AddItem(ItemData data, int amount, int flatIndex, bool choppable, bool grillable)
     {
         // Check if stackable and if an identical item (same data + same state/flatIndex) already exists
         InventoryItem existingItem = _inventoryItems.Find(item => item._itemData == data && item._flatIndex == flatIndex);
@@ -209,7 +216,7 @@ public class PlayerInventory : MonoBehaviour
         }
         else
         {
-            InventoryItem newItem = new InventoryItem(data, amount, flatIndex);
+            InventoryItem newItem = new InventoryItem(data, amount, flatIndex, choppable, grillable);
             _inventoryItems.Add(newItem);
             Debug.Log($"Added new item: {data.itemName} (Qty: {amount})");
         }

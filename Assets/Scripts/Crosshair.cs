@@ -22,6 +22,7 @@ public class Crosshair : MonoBehaviour
 
     [Header("Target Specific Crosshairs")]
     [SerializeField] private List<CrosshairConfig> _crosshairConfigs = new List<CrosshairConfig>();
+    public List<CrosshairConfig> CrosshairConfigs => _crosshairConfigs;
 
     private Image _crosshairImage;
     private RectTransform _rt;

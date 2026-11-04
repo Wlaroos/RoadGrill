@@ -11,11 +11,13 @@ public class InventoryItem
     // Optional data (animal flattening)
     public int _flatIndex = -1;      // -1 means not applicable / normal item
 
-    public InventoryItem(ItemData data, int quantity = 1, int flatIndex = -1)
+    public InventoryItem(ItemData data, int quantity, int flatIndex, bool choppable, bool grillable)
     {
         _itemData = data;
         _quantity = quantity;
         _flatIndex = flatIndex;
+        _itemData.isChoppable = choppable;
+        _itemData.isGrillable = grillable;
     }
 
     public int GetBaseValue()
