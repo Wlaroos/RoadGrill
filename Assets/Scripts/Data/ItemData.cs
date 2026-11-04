@@ -12,27 +12,16 @@ public class ItemData : ScriptableObject
     public GameObject worldPrefab;
     [Header("Conditionals")]
     public bool isChoppable;
-    [ConditionalHide("isChoppable")]
     public ItemData choppedItem;
-    [ConditionalHide("isChoppable")]
     public int choppedItemAmount = 1;
     public bool isGrillable;
-    [ConditionalHide("isGrillable")]
     public ItemData grilledItem;
-    [ConditionalHide("isGrillable")]
     public float cookTime = 5f;
     public bool isStackable = true;
-    [ConditionalHide("isStackable")]
     public int maxStackSize = 1;
     public bool isSellable = true;
-    [ConditionalHide("isSellable")]
     public float value = 10;
-
-    // Hidden field to track the flat index of the item
-    private int _flatIndex = 0;
-    public int FlatIndex
-    {
-        get { return _flatIndex; }
-        set { _flatIndex = value; }
-    }
+    [Header("Flatness")]
+    public bool isFlattenable = false;
+    public float[] flatValueMultipliers = { 1.0f, 0.8f, 0.5f, 0.2f };
 }

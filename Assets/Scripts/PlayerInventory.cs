@@ -250,7 +250,7 @@ public class PlayerInventory : MonoBehaviour
                         _inventoryItems.Remove(item);
                     }
 
-                    AddItem(chopped, 1, item._flatIndex, chopped.isChoppable, chopped.isGrillable);
+                    AddItem(chopped, item._itemData.choppedItemAmount, item._flatIndex, chopped.isChoppable, chopped.isGrillable);
                     Debug.Log($"[ChopTable] Chopped {item._itemData.itemName} into {chopped.itemName}");
                     UpdateInventoryUI();
                 }
@@ -265,8 +265,16 @@ public class PlayerInventory : MonoBehaviour
                 {
                     if (_activeGrillInteractable != null)
                     {
-                        _inventoryItems.Remove(item);
-                        _activeGrillInteractable.PlaceItemOnGrill(item._itemData);
+                        if (item._quantity > 1)
+                        {
+                            item._quantity--;
+                        }
+                        else
+                        {
+                            _inventoryItems.Remove(item);
+                        }
+
+                        _activeGrillInteractable.PlaceItemOnGrill(item);
                         Debug.Log($"[Grill] Placed {item._itemData.itemName} on grill.");
                         ToggleInventory();
                     }
@@ -308,6 +316,7 @@ public class PlayerInventory : MonoBehaviour
         else
         {
             InventoryItem newItem = new InventoryItem(data, amount, flatIndex, choppable, grillable);
+
             _inventoryItems.Add(newItem);
             Debug.Log($"Added new item: {data.itemName} (Qty: {amount})");
         }

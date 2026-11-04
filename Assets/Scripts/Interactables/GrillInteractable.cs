@@ -8,7 +8,7 @@ public class GrillInteractable : Interactable
     [SerializeField] private Transform _spawnPoint;
     
     private Renderer _r;
-    private ItemData _storedItemData;
+    private InventoryItem _storedInventoryItem;
     private GameObject _spawnedObject;
     
     private float _cookTimer = 0f;
@@ -32,62 +32,70 @@ public class GrillInteractable : Interactable
         }
         else if (_isCooked)
         {
-            if (_storedItemData != null && _storedItemData.grilledItem != null)
+            if (_storedInventoryItem != null && _storedInventoryItem._itemData.grilledItem != null)
             {
-                PlayerInventory.Instance?.AddItem(_storedItemData.grilledItem, 1, _storedItemData.grilledItem.FlatIndex, _storedItemData.grilledItem.isChoppable, _storedItemData.grilledItem.isGrillable);
-                Debug.Log($"Collected cooked item: {_storedItemData.grilledItem.itemName}");
+                PlayerInventory.Instance?.AddItem(_storedInventoryItem._itemData.grilledItem, 1, _storedInventoryItem._flatIndex, _storedInventoryItem._itemData.grilledItem.isChoppable, _storedInventoryItem._itemData.grilledItem.isGrillable);
+                Debug.Log($"Collected cooked item: {_storedInventoryItem._itemData.grilledItem.itemName}");
             }
             ResetGrill();
         }
         else if (_isCooking)
         {
-            Debug.Log($"Grill is currently cooking {_storedItemData.itemName}... ({_cookTimer:F1}/{_targetCookTime}s)");
+            Debug.Log($"Grill is currently cooking {_storedInventoryItem._itemData.itemName}... ({_cookTimer:F1}/{_targetCookTime}s)");
         }
     }
 
-    public void PlaceItemOnGrill(ItemData itemData)
+    public void PlaceItemOnGrill(InventoryItem inventoryItem)
     {
-        _storedItemData = itemData;
-        _targetCookTime = itemData.cookTime;
+        _storedInventoryItem = inventoryItem;
+        _targetCookTime = inventoryItem._itemData.cookTime;
         _cookTimer = 0f;
         _isCooking = true;
         _isCooked = false;
 
         if (_spawnPoint == null) _spawnPoint = transform;
 
-        if (itemData.worldPrefab != null)
+        if (inventoryItem._itemData.worldPrefab != null)
         {
-            _spawnedObject = Instantiate(itemData.worldPrefab, _spawnPoint.position, _spawnPoint.rotation, _spawnPoint);
+            _spawnedObject = Instantiate(inventoryItem._itemData.worldPrefab, _spawnPoint.position, _spawnPoint.rotation, _spawnPoint);
         }
         else
         {
             _spawnedObject = GameObject.CreatePrimitive(PrimitiveType.Cube);
             _spawnedObject.transform.position = _spawnPoint.position;
-            _spawnedObject.transform.localScale = Vector3.one * 0.3f;
+            _spawnedObject.transform.localScale = Vector3.one * 0.1f;
             _spawnedObject.transform.SetParent(_spawnPoint);
         }
 
-        StartCoroutine(CookRoutine());
+        StartCoroutine(CookRoutine(_spawnedObject));
     }
 
-    private IEnumerator CookRoutine()
+    private IEnumerator CookRoutine(GameObject cookedObject)
     {
+        Material objectMaterial = cookedObject.GetComponent<Renderer>().material;
+        Color defaultColor = objectMaterial.color;
+        Color endColor = Color.black;
+
         while (_cookTimer < _targetCookTime)
         {
+            float t = _cookTimer / _targetCookTime;
+            objectMaterial.color = Color.Lerp(defaultColor, endColor, t);
+
             _cookTimer += Time.deltaTime;
+
             yield return null;
         }
 
         _isCooking = false;
         _isCooked = true;
-        Debug.Log($"Item {_storedItemData.itemName} is fully cooked on the grill! Interact to collect.");
+        Debug.Log($"Item {_storedInventoryItem._itemData.itemName} is fully cooked on the grill! Interact to collect.");
     }
 
     private void ResetGrill()
     {
         _isCooking = false;
         _isCooked = false;
-        _storedItemData = null;
+        _storedInventoryItem = null;
         if (_spawnedObject != null)
         {
             Destroy(_spawnedObject);

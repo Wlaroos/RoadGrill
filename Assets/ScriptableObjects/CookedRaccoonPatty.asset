@@ -23,6 +23,6 @@ MonoBehaviour:
   grilledItem: {fileID: 0}
   cookTime: 5
   isStackable: 1
-  maxStackSize: 1
+  maxStackSize: 99
   isSellable: 1
-  value: 10
+  value: 75

@@ -18,7 +18,7 @@ MonoBehaviour:
   worldPrefab: {fileID: 0}
   isChoppable: 1
   choppedItem: {fileID: 11400000, guid: fad8e3ff028eb9f409984a8a73878459, type: 2}
-  choppedItemAmount: 1
+  choppedItemAmount: 3
   isGrillable: 0
   grilledItem: {fileID: 0}
   cookTime: 5

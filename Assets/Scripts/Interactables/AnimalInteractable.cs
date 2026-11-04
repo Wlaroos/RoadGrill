@@ -49,7 +49,7 @@ public class AnimalInteractable : Interactable
         // Check cooldown first
         if (Time.time - _lastHitTime < _hitCooldown) return false;
 
-        Debug.Log($"{gameObject.name} was hit at {impactVelocity:F1} m/s.");
+        //Debug.Log($"{gameObject.name} was hit at {impactVelocity:F1} m/s.");
 
         _lastHitTime = Time.time;
 
@@ -75,7 +75,7 @@ public class AnimalInteractable : Interactable
         if (_isDead) return;
 
         _currentHealth -= amount;
-        Debug.Log($"{gameObject.name} took {amount:F1} damage. Health: {_currentHealth:F1} / {_animalItemData.maxHealth}");
+        //Debug.Log($"{gameObject.name} took {amount:F1} damage. Health: {_currentHealth:F1} / {_animalItemData.maxHealth}");
 
         if (_currentHealth <= 0f)
         {
@@ -89,7 +89,7 @@ public class AnimalInteractable : Interactable
 
         gameObject.layer = LayerMask.NameToLayer("Interactable");
 
-        Debug.Log($"{gameObject.name} has died!");
+        //Debug.Log($"{gameObject.name} has died!");
 
         // Disable AI / movement scripts here
 
@@ -103,7 +103,7 @@ public class AnimalInteractable : Interactable
     private void IncrementFlatten()
     {
         _flatIndex = Mathf.Clamp(_flatIndex + 1, 0, _maxFlatIndex);
-        Debug.Log($"{gameObject.name} flattened {_flatIndex} / {_maxFlatIndex}");
+        //Debug.Log($"{gameObject.name} flattened {_flatIndex} / {_maxFlatIndex}");
 
         // Scale Modification (Flattened Y, stretched X/Z)
         float newY = Mathf.Max(0.05f, _originalScale.y - (_flatIndex * _flattenAmountY));

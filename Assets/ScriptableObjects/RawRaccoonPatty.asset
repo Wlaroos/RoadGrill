@@ -21,8 +21,8 @@ MonoBehaviour:
   choppedItemAmount: 0
   isGrillable: 1
   grilledItem: {fileID: 11400000, guid: dbff0c79975be824eaa4ef67cab518d2, type: 2}
-  cookTime: 5
+  cookTime: 6
   isStackable: 1
-  maxStackSize: 1
+  maxStackSize: 99
   isSellable: 1
-  value: 10
+  value: 15

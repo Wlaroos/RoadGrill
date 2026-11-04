@@ -6,10 +6,8 @@ public class InventoryItem
 {
     public ItemData _itemData;
     public int _quantity;
+    public int _flatIndex;
     private int _baseValue;
-
-    // Optional data (animal flattening)
-    public int _flatIndex = -1;      // -1 means not applicable / normal item
 
     public InventoryItem(ItemData data, int quantity, int flatIndex, bool choppable, bool grillable)
     {
@@ -25,18 +23,15 @@ public class InventoryItem
         return _baseValue;
     }
 
-    // Helper to calculate value if it's an animal item
+    // Helper to calculate flat value
     public int GetCalculatedValue()
     {
-        if (_itemData is AnimalItemData animalData)
+        float multiplier = 1f;
+
+        if (_itemData.flatValueMultipliers != null && _flatIndex >= 0 && _flatIndex < _itemData.flatValueMultipliers.Length)
         {
-            float multiplier = 1f;
-            if (animalData.flatValueMultipliers != null && _flatIndex >= 0 && _flatIndex < animalData.flatValueMultipliers.Length)
-            {
-                multiplier = animalData.flatValueMultipliers[_flatIndex];
-            }
-            return Mathf.RoundToInt(_baseValue * multiplier);
+            multiplier = _itemData.flatValueMultipliers[_flatIndex];
         }
-        return 0;
+            return Mathf.RoundToInt(_baseValue * multiplier);
     }
 }
