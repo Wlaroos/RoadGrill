@@ -26,9 +26,10 @@ MonoBehaviour:
   maxStackSize: 3
   isSellable: 1
   value: 10
-  maxHealth: 10
+  isFlattenable: 1
   flatValueMultipliers:
   - 1
   - 0.8
   - 0.5
   - 0.2
+  maxHealth: 10

@@ -6,13 +6,15 @@ public class PlayerInteraction : MonoBehaviour
     [Header("Raycast Settings")]
     [SerializeField] private float _interactionRange = 3.5f;
     [SerializeField] private LayerMask _interactionLayer;
-
-    [Header("UI References")]
-    [SerializeField] private Crosshair _crosshair;
-
+    private Crosshair _crosshair;
     private Camera _mainCamera;
     private Interactable _currentInteractable;
     private bool _isInteractCheckActive = true;
+
+    private void Awake()
+    {
+        _crosshair = Crosshair.Instance;
+    }
 
     private void Start()
     {
@@ -64,6 +66,10 @@ public class PlayerInteraction : MonoBehaviour
             {
                 _isInteractCheckActive = true;
                 SetCrosshairVisible(true);
+            }
+            else
+            {
+                SetCrosshairVisible(false);
             }
         }
     }

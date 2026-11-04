@@ -20,8 +20,6 @@ public class PlayerInventory : MonoBehaviour
     [Space]
     [SerializeField] private PlayerInputs _playerInputs;
     [Space]
-    [SerializeField] private Crosshair _crosshair;
-    [Space]
     [SerializeField] private List<InventoryItem> _inventoryItems = new List<InventoryItem>();
     public IReadOnlyList<InventoryItem> InventoryItems => _inventoryItems;
 
@@ -91,6 +89,14 @@ public class PlayerInventory : MonoBehaviour
         }
     }
 
+    public void CloseInventory()
+    {
+        if (_invOpen)
+        {
+            ToggleInventory();
+        }
+    }
+
     private void ToggleInventory()
     {
         if (!_invOpen)
@@ -109,7 +115,10 @@ public class PlayerInventory : MonoBehaviour
 
             UpdateInventoryUI();
             _invOpen = true;
+            
             Cursor.lockState = CursorLockMode.Confined;
+            Cursor.visible = false;
+            
             _playerInputs?.DisablePlayerInputs();
 
             OnInventoryStateChanged?.Invoke(true);
@@ -124,7 +133,10 @@ public class PlayerInventory : MonoBehaviour
             }
 
             _invOpen = false;
+            
             Cursor.lockState = CursorLockMode.Locked;
+            Cursor.visible = false;
+            
             _playerInputs?.EnablePlayerInputs();
 
             CurrentInvType = InvType.Inventory;
@@ -183,7 +195,7 @@ public class PlayerInventory : MonoBehaviour
         {
             itemUIComponent = itemUI.AddComponent<InventoryItemUI>();
         }
-        itemUIComponent.Initialize(item._itemData, _crosshair);
+        itemUIComponent.Initialize(item._itemData);
 
         Button itemButton = itemUI.GetComponent<Button>();
         if (itemButton == null)

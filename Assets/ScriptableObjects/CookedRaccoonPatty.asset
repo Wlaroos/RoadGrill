@@ -26,3 +26,9 @@ MonoBehaviour:
   maxStackSize: 99
   isSellable: 1
   value: 75
+  isFlattenable: 1
+  flatValueMultipliers:
+  - 1
+  - 1.2
+  - 1.5
+  - 1.8

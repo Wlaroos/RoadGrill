@@ -27,11 +27,21 @@ public class Crosshair : MonoBehaviour
     private Image _crosshairImage;
     private RectTransform _rt;
     private Dictionary<InteractionType, CrosshairConfig> _configLookup;
+    public static Crosshair Instance { get; private set; }
 
     private void Awake()
     {
         _crosshairImage = GetComponent<Image>();
         _rt = GetComponent<RectTransform>();
+
+        if (Instance == null)
+        {
+            Instance = this;
+        }
+        else
+        {
+            Destroy(gameObject);
+        }
 
         BuildLookupDictionary();
     }
