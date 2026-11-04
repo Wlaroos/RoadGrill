@@ -13,6 +13,8 @@ public enum InvType
 
 public class PlayerInventory : MonoBehaviour
 {
+    public static PlayerInventory Instance { get; private set; }
+
     [SerializeField] private GameObject _inventoryUIPanel;
     [SerializeField] private GameObject _itemUIPrefab;
     [Space]
@@ -22,8 +24,13 @@ public class PlayerInventory : MonoBehaviour
     [Space]
     [SerializeField] private List<InventoryItem> _inventoryItems = new List<InventoryItem>();
     public IReadOnlyList<InventoryItem> InventoryItems => _inventoryItems;
+
     private bool _invOpen = false;
     public bool IsInventoryOpen => _invOpen;
+
+    public InvType CurrentInvType { get; private set; } = InvType.Inventory;
+    private GrillInteractable _activeGrillInteractable;
+
     private List<GameObject> _uiPool = new List<GameObject>();
     private CanvasGroup _inventoryUICanvasGroup;
 
@@ -41,6 +48,16 @@ public class PlayerInventory : MonoBehaviour
 
     private void Awake()
     {
+        if (Instance == null)
+        {
+            Instance = this;
+        }
+        else
+        {
+            Destroy(gameObject);
+            return;
+        }
+
         if (_inventoryUIPanel != null)
         {
             _inventoryUICanvasGroup = _inventoryUIPanel.GetComponent<CanvasGroup>();
@@ -53,21 +70,36 @@ public class PlayerInventory : MonoBehaviour
         }
         _invOpen = false;
 
-        // Auto-assign PlayerInputs if left empty in the Inspector
         if (_playerInputs == null)
         {
             _playerInputs = GetComponent<PlayerInputs>() ?? FindFirstObjectByType<PlayerInputs>();
         }
     }
 
+    public void OpenInventory(InvType invType, GrillInteractable grillInteractable = null)
+    {
+        CurrentInvType = invType;
+        _activeGrillInteractable = grillInteractable;
+
+        if (!_invOpen)
+        {
+            ToggleInventory();
+        }
+        else
+        {
+            UpdateInventoryUI();
+        }
+    }
+
     private void ToggleInventory()
     {
-        // Use this if inventory is not supposed to be opened while driving
-        // PlayerVehicleManager vehicleMgr = PlayerVehicleManager.Instance;
-        // if (vehicleMgr != null && vehicleMgr.IsDriving) return;
-
-        if(!_invOpen)
+        if (!_invOpen)
         {
+            if (_playerInputs != null && CurrentInvType != InvType.ChopTable && CurrentInvType != InvType.Grill)
+            {
+                CurrentInvType = InvType.Inventory;
+            }
+
             if (_inventoryUICanvasGroup != null)
             {
                 _inventoryUICanvasGroup.alpha = 1;
@@ -80,7 +112,6 @@ public class PlayerInventory : MonoBehaviour
             Cursor.lockState = CursorLockMode.Confined;
             _playerInputs?.DisablePlayerInputs();
 
-            // Broadcast that inventory opened
             OnInventoryStateChanged?.Invoke(true);
         }
         else
@@ -96,26 +127,33 @@ public class PlayerInventory : MonoBehaviour
             Cursor.lockState = CursorLockMode.Locked;
             _playerInputs?.EnablePlayerInputs();
 
-            // Broadcast that inventory closed
+            CurrentInvType = InvType.Inventory;
+            _activeGrillInteractable = null;
+
             OnInventoryStateChanged?.Invoke(false);
         }
     }
 
     private void UpdateInventoryUI()
     {
-        // Deactivate all pooled UI elements first
+        _inventoryUIPanel.transform.GetChild(0).GetChild(0).GetComponent<TextMeshProUGUI>().text = CurrentInvType switch
+        {
+            InvType.Inventory => "Inventory",
+            InvType.ChopTable => "Chop Table",
+            InvType.Grill => "Grill",
+            _ => "Inventory"
+        };
+
         foreach (GameObject uiObj in _uiPool)
         {
             if (uiObj != null) uiObj.SetActive(false);
         }
 
-        // Populate UI for each inventory item
         for (int i = 0; i < _inventoryItems.Count; i++)
         {
             InventoryItem item = _inventoryItems[i];
             GameObject itemUI;
 
-            // Reuse existing pooled object or instantiate a new one
             if (i < _uiPool.Count)
             {
                 itemUI = _uiPool[i];
@@ -127,7 +165,6 @@ public class PlayerInventory : MonoBehaviour
                 _uiPool.Add(itemUI);
             }
 
-            // Populate the UI components
             SetupItemUI(itemUI, item);
         }
     }
@@ -148,7 +185,14 @@ public class PlayerInventory : MonoBehaviour
         }
         itemUIComponent.Initialize(item._itemData, _crosshair);
 
-        // Set Icon
+        Button itemButton = itemUI.GetComponent<Button>();
+        if (itemButton == null)
+        {
+            itemButton = itemUI.AddComponent<Button>();
+        }
+        itemButton.onClick.RemoveAllListeners();
+        itemButton.onClick.AddListener(() => HandleItemClicked(item));
+
         if (iconImage != null)
         {
             if (item._itemData != null && item._itemData.icon != null)
@@ -162,13 +206,11 @@ public class PlayerInventory : MonoBehaviour
             }
         }
 
-        // Set Name
         if (nameText != null)
         {
             nameText.text = item._itemData != null ? item._itemData.itemName : "Unknown";
         }
 
-        // Set FlatIndex word
         if (flatIndexText != null)
         {
             string flatWord = GetFlatIndexWord(item._flatIndex);
@@ -176,13 +218,11 @@ public class PlayerInventory : MonoBehaviour
             flatIndexText.gameObject.SetActive(!string.IsNullOrEmpty(flatWord));
         }
 
-        // Set Amount (only show if greater than 1)
         if (amountText != null)
         {
             amountText.text = item._quantity > 1 ? "x" + item._quantity.ToString() : "";
         }
 
-        // Force immediate layout update so text boxes and parent groups resize correctly
         Canvas.ForceUpdateCanvases();
         if (layoutGroupTransform is RectTransform rectTransform)
         {
@@ -190,9 +230,61 @@ public class PlayerInventory : MonoBehaviour
         }
     }
 
+    public void HandleItemClicked(InventoryItem item)
+    {
+        if (item == null || item._itemData == null) return;
+
+        switch (CurrentInvType)
+        {
+            case InvType.Inventory:
+                Debug.Log($"[Inventory] Clicked item: {item._itemData.itemName} (Qty: {item._quantity})");
+                break;
+
+            case InvType.ChopTable:
+                if (item._itemData.isChoppable && item._itemData.choppedItem != null)
+                {
+                    ItemData chopped = item._itemData.choppedItem;
+                    item._quantity--;
+                    if (item._quantity <= 0)
+                    {
+                        _inventoryItems.Remove(item);
+                    }
+
+                    AddItem(chopped, 1, item._flatIndex, chopped.isChoppable, chopped.isGrillable);
+                    Debug.Log($"[ChopTable] Chopped {item._itemData.itemName} into {chopped.itemName}");
+                    UpdateInventoryUI();
+                }
+                else
+                {
+                    Debug.Log($"[ChopTable] {item._itemData.itemName} cannot be chopped.");
+                }
+                break;
+
+            case InvType.Grill:
+                if (item._itemData.isGrillable)
+                {
+                    if (_activeGrillInteractable != null)
+                    {
+                        _inventoryItems.Remove(item);
+                        _activeGrillInteractable.PlaceItemOnGrill(item._itemData);
+                        Debug.Log($"[Grill] Placed {item._itemData.itemName} on grill.");
+                        ToggleInventory();
+                    }
+                    else
+                    {
+                        Debug.LogWarning("[Grill] No active GrillInteractable found.");
+                    }
+                }
+                else
+                {
+                    Debug.Log($"[Grill] {item._itemData.itemName} cannot be grilled.");
+                }
+                break;
+        }
+    }
+
     private string GetFlatIndexWord(int flatIndex)
     {
-        // 0 or lower shows nothing
         if (flatIndex <= 0) return string.Empty;
 
         return flatIndex switch
@@ -200,13 +292,12 @@ public class PlayerInventory : MonoBehaviour
             1 => "Flat",
             2 => "Flatter",
             3 => "Flattest",
-            _ => "Pancake" // Fallback for index higher than 3
+            _ => "Pancake"
         };
     }
 
     public void AddItem(ItemData data, int amount, int flatIndex, bool choppable, bool grillable)
     {
-        // Check if stackable and if an identical item (same data + same state/flatIndex) already exists
         InventoryItem existingItem = _inventoryItems.Find(item => item._itemData == data && item._flatIndex == flatIndex);
 
         if (existingItem != null && data.isStackable)

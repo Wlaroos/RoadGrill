@@ -1745,6 +1745,7 @@ MonoBehaviour:
   _interactionType: 0
   _defaultMat: {fileID: 2100000, guid: 6263605e3344e254396f073acdd9fcbe, type: 2}
   _hoverMat: {fileID: 2100000, guid: 18510f22622a6b244b45d89c94ed4688, type: 2}
+  _spawnPoint: {fileID: 0}
 --- !u!1 &485972561
 GameObject:
   m_ObjectHideFlags: 0
@@ -2700,6 +2701,7 @@ MonoBehaviour:
   _interactionType: 0
   _defaultMat: {fileID: 2100000, guid: 6263605e3344e254396f073acdd9fcbe, type: 2}
   _hoverMat: {fileID: 2100000, guid: 18510f22622a6b244b45d89c94ed4688, type: 2}
+  _spawnPoint: {fileID: 0}
 --- !u!1 &1003446335
 GameObject:
   m_ObjectHideFlags: 0
@@ -4875,6 +4877,7 @@ MonoBehaviour:
   _interactionType: 0
   _defaultMat: {fileID: 2100000, guid: 6263605e3344e254396f073acdd9fcbe, type: 2}
   _hoverMat: {fileID: 2100000, guid: 18510f22622a6b244b45d89c94ed4688, type: 2}
+  _spawnPoint: {fileID: 0}
 --- !u!1 &2030893987
 GameObject:
   m_ObjectHideFlags: 0
@@ -5300,6 +5303,7 @@ MonoBehaviour:
   _interactionType: 0
   _defaultMat: {fileID: 2100000, guid: 6263605e3344e254396f073acdd9fcbe, type: 2}
   _hoverMat: {fileID: 2100000, guid: 18510f22622a6b244b45d89c94ed4688, type: 2}
+  _spawnPoint: {fileID: 0}
 --- !u!1 &2079373604
 GameObject:
   m_ObjectHideFlags: 0
@@ -5523,7 +5527,7 @@ GameObject:
   - component: {fileID: 2127057861}
   - component: {fileID: 2127057860}
   m_Layer: 5
-  m_Name: GameObject
+  m_Name: Menu Title
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

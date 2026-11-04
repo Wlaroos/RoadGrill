@@ -15,10 +15,13 @@ MonoBehaviour:
   itemName: Rabbit
   itemID: Rabbit
   icon: {fileID: 0}
+  worldPrefab: {fileID: 0}
   isChoppable: 1
-  choppedItem: {fileID: 0}
+  choppedItem: {fileID: 11400000, guid: fad8e3ff028eb9f409984a8a73878459, type: 2}
+  choppedItemAmount: 1
   isGrillable: 0
   grilledItem: {fileID: 0}
+  cookTime: 5
   isStackable: 1
   maxStackSize: 3
   isSellable: 1
