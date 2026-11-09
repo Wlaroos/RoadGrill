@@ -12,6 +12,11 @@ public class AnimalInteractable : Interactable
     [SerializeField] private float _velocityDamageMultiplier = 5f;
     [SerializeField] private float _hitCooldown = 0.75f; // Debounce to prevent multiple damage/flatten triggers in a single pass
 
+    [Header("Wandering Settings")]
+    [SerializeField] private float _moveSpeed = 2f;
+    [SerializeField] private float _changeDirectionInterval = 3f;
+    [SerializeField] private float _idleChance = 0.3f; // Chance to stand still instead of moving
+
     [Header("Flattening Settings (Dead Body)")]
     private int _flatIndex = 0;
     [SerializeField] private int _maxFlatIndex = 3;
@@ -30,6 +35,11 @@ public class AnimalInteractable : Interactable
     private Rigidbody _rb;
     private Vector3 _originalScale;
 
+    // Wandering state variables
+    private Vector3 _moveDirection;
+    private float _wanderTimer;
+    private bool _isIdle;
+
     public override void Awake()
     {
         base.Awake();
@@ -41,6 +51,69 @@ public class AnimalInteractable : Interactable
         {
             _meshFilter = GetComponentInChildren<MeshFilter>();
         }
+
+        ChooseNewDirection();
+    }
+
+    private void Update()
+    {
+        if (_isDead) return;
+
+        // Handle wandering timer
+        _wanderTimer -= Time.deltaTime;
+        if (_wanderTimer <= 0f)
+        {
+            ChooseNewDirection();
+        }
+    }
+
+    private void FixedUpdate()
+    {
+        if (_isDead) return;
+
+        if (!_isIdle && _rb != null)
+        {
+            // Make sure the movement is on the XZ plane
+            _moveDirection.y = 0f;
+            _moveDirection.Normalize();
+
+            Vector3 targetVelocity = _moveDirection * _moveSpeed;
+            targetVelocity.y = _rb.linearVelocity.y;
+            _rb.linearVelocity = targetVelocity;
+
+            // Rotate only around the Y-axis
+            if (_moveDirection != Vector3.zero)
+            {
+                float targetAngle = Mathf.Atan2(_moveDirection.x, _moveDirection.z) * Mathf.Rad2Deg;
+                Quaternion targetRotation = Quaternion.Euler(0f, targetAngle, 0f);
+                transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, Time.fixedDeltaTime * 5f);
+            }
+        }
+        else if (_isIdle && _rb != null)
+        {
+            // Halt horizontal movement while idling
+            Vector3 vel = _rb.linearVelocity;
+            vel.x = 0f;
+            vel.z = 0f;
+            _rb.linearVelocity = vel;
+        }
+    }
+
+    private void ChooseNewDirection()
+    {
+        _wanderTimer = Random.Range(2f, _changeDirectionInterval + 2f);
+        _isIdle = Random.value < _idleChance;
+
+        if (!_isIdle)
+        {
+            float randomAngle = Random.Range(0f, 360f);
+            // Keep Y at 0
+            _moveDirection = new Vector3(Mathf.Sin(randomAngle * Mathf.Deg2Rad), 0f, Mathf.Cos(randomAngle * Mathf.Deg2Rad)).normalized;
+        }
+        else
+        {
+            _moveDirection = Vector3.zero;
+        }
     }
 
     // Returns true if the hit was processed, false if it was blocked by cooldown
@@ -48,8 +121,6 @@ public class AnimalInteractable : Interactable
     {
         // Check cooldown first
         if (Time.time - _lastHitTime < _hitCooldown) return false;
-
-        //Debug.Log($"{gameObject.name} was hit at {impactVelocity:F1} m/s.");
 
         _lastHitTime = Time.time;
 
@@ -75,7 +146,6 @@ public class AnimalInteractable : Interactable
         if (_isDead) return;
 
         _currentHealth -= amount;
-        //Debug.Log($"{gameObject.name} took {amount:F1} damage. Health: {_currentHealth:F1} / {_animalItemData.maxHealth}");
 
         if (_currentHealth <= 0f)
         {
@@ -86,24 +156,20 @@ public class AnimalInteractable : Interactable
     private void Die()
     {
         _isDead = true;
-
         gameObject.layer = LayerMask.NameToLayer("Interactable");
 
-        //Debug.Log($"{gameObject.name} has died!");
-
-        // Disable AI / movement scripts here
-
+        // Stop wandering movement immediately
         if (_rb != null)
         {
+            _rb.linearVelocity = Vector3.zero;
             _rb.isKinematic = false;
-            _rb.mass *= 5f; // Increase mass to make it harder to move
+            _rb.mass *= 5f; // Increase mass to make dead body harder to push around
         }
     }
 
     private void IncrementFlatten()
     {
         _flatIndex = Mathf.Clamp(_flatIndex + 1, 0, _maxFlatIndex);
-        //Debug.Log($"{gameObject.name} flattened {_flatIndex} / {_maxFlatIndex}");
 
         // Scale Modification (Flattened Y, stretched X/Z)
         float newY = Mathf.Max(0.05f, _originalScale.y - (_flatIndex * _flattenAmountY));

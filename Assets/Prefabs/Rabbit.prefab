@@ -1017,8 +1017,8 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 8510804573416467638}
   serializedVersion: 2
-  m_LocalRotation: {x: -0, y: -0.8724855, z: -0, w: 0.4886401}
-  m_LocalPosition: {x: -0.9, y: 1.075, z: 16.66}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -1035,7 +1035,7 @@ Transform:
   - {fileID: 8627320755429126780}
   - {fileID: 7253651898390567128}
   m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: -121.498, z: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!65 &367026487254473517
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -1082,7 +1082,7 @@ Rigidbody:
   m_UseGravity: 1
   m_IsKinematic: 0
   m_Interpolate: 1
-  m_Constraints: 0
+  m_Constraints: 16
   m_CollisionDetection: 0
 --- !u!114 &1498103269058435707
 MonoBehaviour:
@@ -1100,6 +1100,9 @@ MonoBehaviour:
   _animalItemData: {fileID: 11400000, guid: bce6b164145db79459d4a7c1f90d837e, type: 2}
   _velocityDamageMultiplier: 5
   _hitCooldown: 0.75
+  _moveSpeed: 2
+  _changeDirectionInterval: 3
+  _idleChance: 0.3
   _maxFlatIndex: 3
   _flattenAmountY: 0.3
   _stretchAmountXZ: 0.3
