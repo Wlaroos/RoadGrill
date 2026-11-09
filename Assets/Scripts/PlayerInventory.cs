@@ -8,7 +8,8 @@ public enum InvType
 {
     Inventory,
     ChopTable,
-    Grill
+    Grill,
+    Shop
 }
 
 public class PlayerInventory : MonoBehaviour
@@ -20,7 +21,8 @@ public class PlayerInventory : MonoBehaviour
     [Space]
     [SerializeField] private PlayerInputs _playerInputs;
     [Space]
-    [SerializeField] private List<InventoryItem> _inventoryItems = new List<InventoryItem>();
+    [SerializeField] private TextMeshProUGUI _moneyText;
+    private List<InventoryItem> _inventoryItems = new List<InventoryItem>();
     public IReadOnlyList<InventoryItem> InventoryItems => _inventoryItems;
 
     private bool _invOpen = false;
@@ -33,6 +35,8 @@ public class PlayerInventory : MonoBehaviour
     private CanvasGroup _inventoryUICanvasGroup;
 
     public static event Action<bool> OnInventoryStateChanged;
+    private float _money;
+    public float Money => _money;
 
     private void OnEnable()
     {
@@ -101,7 +105,7 @@ public class PlayerInventory : MonoBehaviour
     {
         if (!_invOpen)
         {
-            if (_playerInputs != null && CurrentInvType != InvType.ChopTable && CurrentInvType != InvType.Grill)
+            if (_playerInputs != null && CurrentInvType != InvType.ChopTable && CurrentInvType != InvType.Grill && CurrentInvType != InvType.Shop)
             {
                 CurrentInvType = InvType.Inventory;
             }
@@ -153,6 +157,7 @@ public class PlayerInventory : MonoBehaviour
             InvType.Inventory => "Inventory",
             InvType.ChopTable => "Chop Table",
             InvType.Grill => "Grill",
+            InvType.Shop => "Sell Items",
             _ => "Inventory"
         };
 
@@ -249,7 +254,7 @@ public class PlayerInventory : MonoBehaviour
         switch (CurrentInvType)
         {
             case InvType.Inventory:
-                Debug.Log($"[Inventory] Clicked item: {item._itemData.itemName} (Qty: {item._quantity})");
+                //Debug.Log($"[Inventory] Clicked item: {item._itemData.itemName} (Qty: {item._quantity})");
                 break;
 
             case InvType.ChopTable:
@@ -263,12 +268,12 @@ public class PlayerInventory : MonoBehaviour
                     }
 
                     AddItem(chopped, item._itemData.choppedItemAmount, item._flatIndex, chopped.isChoppable, chopped.isGrillable);
-                    Debug.Log($"[ChopTable] Chopped {item._itemData.itemName} into {chopped.itemName}");
+                    //Debug.Log($"[ChopTable] Chopped {item._itemData.itemName} into {chopped.itemName}");
                     UpdateInventoryUI();
                 }
                 else
                 {
-                    Debug.Log($"[ChopTable] {item._itemData.itemName} cannot be chopped.");
+                    //Debug.Log($"[ChopTable] {item._itemData.itemName} cannot be chopped.");
                 }
                 break;
 
@@ -287,17 +292,35 @@ public class PlayerInventory : MonoBehaviour
                         }
 
                         _activeGrillInteractable.PlaceItemOnGrill(item);
-                        Debug.Log($"[Grill] Placed {item._itemData.itemName} on grill.");
+                        //Debug.Log($"[Grill] Placed {item._itemData.itemName} on grill.");
                         ToggleInventory();
                     }
                     else
                     {
-                        Debug.LogWarning("[Grill] No active GrillInteractable found.");
+                        //Debug.LogWarning("[Grill] No active GrillInteractable found.");
                     }
                 }
                 else
                 {
-                    Debug.Log($"[Grill] {item._itemData.itemName} cannot be grilled.");
+                    //Debug.Log($"[Grill] {item._itemData.itemName} cannot be grilled.");
+                }
+                break;
+            case InvType.Shop:
+                {
+                    //Debug.Log($"[Shop] Clicked item: {item._itemData.itemName} (Qty: {item._quantity})");
+
+                    if (item._quantity > 1)
+                    {
+                        item._quantity--;
+                    }
+                    else
+                    {
+                        _inventoryItems.Remove(item);
+                    }
+
+                    UpdateInventoryUI();
+                
+                    ChangeMoney(item._itemData.value * item._itemData.flatValueMultipliers[item._flatIndex]);
                 }
                 break;
         }
@@ -323,14 +346,21 @@ public class PlayerInventory : MonoBehaviour
         if (existingItem != null && data.isStackable)
         {
             existingItem._quantity += amount;
-            Debug.Log($"Stacked {amount}x {data.itemName}. Total: {existingItem._quantity}");
+            //Debug.Log($"Stacked {amount}x {data.itemName}. Total: {existingItem._quantity}");
         }
         else
         {
             InventoryItem newItem = new InventoryItem(data, amount, flatIndex, choppable, grillable);
 
             _inventoryItems.Add(newItem);
-            Debug.Log($"Added new item: {data.itemName} (Qty: {amount})");
+            //Debug.Log($"Added new item: {data.itemName} (Qty: {amount})");
         }
+    }
+
+    private void ChangeMoney(float amount)
+    {
+        _money += amount;
+
+        _moneyText.text = $"Money: ${_money}";
     }
 }

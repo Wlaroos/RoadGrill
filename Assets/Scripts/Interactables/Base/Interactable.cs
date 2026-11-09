@@ -28,7 +28,7 @@ public class Interactable : MonoBehaviour, IInteractable
     public virtual void Interact()
     {
         // Base interaction event or override in child classes
-        Debug.LogFormat("Interacted with {0}", gameObject.name);
+        // Debug.LogFormat("Interacted with {0}", gameObject.name);
     }
 
     public virtual void RaycastHover()
