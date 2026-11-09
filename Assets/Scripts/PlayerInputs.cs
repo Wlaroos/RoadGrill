@@ -204,12 +204,12 @@ public class PlayerInputs : MonoBehaviour, InputSystem_Actions.IPlayerActions
         InputActions.Player.Look.Disable();
         InputActions.Player.Crouch.Disable();
         InputActions.Player.Sprint.Disable();
-        InputActions.Player.Interact.Disable();
         InputActions.Player.Jump.Disable();
         InputActions.Player.Lean.Disable();
         InputActions.Player.ToggleCamera.Disable();
         InputActions.Player.Handbrake.Disable();
 
+        InputActions.Player.Interact.Enable();
         InputActions.Player.Click.Enable();
         InputActions.Player.RightClick.Enable();
 
